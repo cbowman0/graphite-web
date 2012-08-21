@@ -55,7 +55,7 @@ function createComposerWindow(myComposer) {
 
   var bottomToolbar = [
     { text: "Graph Options", menu: createOptionsMenu() },
-    { text: "Graph Data", handler: toggleWindow(GraphDataWindow.create.createDelegate(GraphDataWindow)) },
+    { text: "Graph Data", handler: toggleWindow(Ext.bind(GraphDataWindow.create, GraphDataWindow)) },
     { text: "Auto-Refresh", id: 'autorefresh_button', enableToggle: true, toggleHandler: toggleAutoRefresh }
   ];
 
@@ -472,16 +472,16 @@ var GraphDataWindow = {
       items: [
         {
           text: 'Add',
-          handler: this.addTarget.createDelegate(this),
+          handler: Ext.bind(addTarget, this),
           disabled: false
         }, {
           text: 'Edit',
           id: 'editTargetButton',
-          handler: this.editTarget.createDelegate(this)
+          handler: Ext.bind(editTarget, this),
         }, {
           text: 'Remove',
           id: 'removeTargetButton',
-          handler: this.removeTarget.createDelegate(this)
+          handler: Ext.bind(removeTarget, this),
         }, {
           text: 'Apply Function',
           id: 'applyFunctionButton',
@@ -495,7 +495,7 @@ var GraphDataWindow = {
           }
         }, {
           text: 'Undo Function',
-          handler: this.removeOuterCall.createDelegate(this),
+          handler: Ext.bind(removeOuterCall, this),
           id: 'undoFunctionButton'
         }
       ]
@@ -552,8 +552,8 @@ var GraphDataWindow = {
       targetList.select(index);
     }
 
-    var removeItem = {text: "Remove", handler: this.removeTarget.createDelegate(this)};
-    var editItem = {text: "Edit", handler: this.editTarget.createDelegate(this)};
+    var removeItem = {text: "Remove", handler: Ext.bind(removeTarget, this)};
+    var editItem = {text: "Edit", handler: Ext.bind(editTarget, this)};
 
     if (this.getSelectedTargets().length == 0) {
       removeItem.disabled = true;
@@ -617,7 +617,7 @@ var GraphDataWindow = {
         "" //initial value
       );
     }
-    applyFunc = applyFunc.createDelegate(this);
+    applyFunc = Ext.bind(applyFunc, this);
     return applyFunc;
   },
 
@@ -641,7 +641,7 @@ var GraphDataWindow = {
 
       this.targetList.select( TargetStore.findExact('value', newTarget), true);
     }
-    applyFunc = applyFunc.createDelegate(this);
+    applyFunc = Ext.bind(applyFunc, this);
     return applyFunc;
   },
 
@@ -817,7 +817,7 @@ var GraphDataWindow = {
 
       win.close();
     }
-    editHandler = editHandler.createDelegate(this); //dynamic scoping can really be a bitch
+    editHandler = Ext.bind(editHandler, this);
 
     win = new Ext.Window({
       title: "Edit Graph Target",
@@ -885,9 +885,9 @@ var GraphDataWindow = {
 };
 
 /* Yet another ghetto api hack */
-var applyFuncToAll = GraphDataWindow.applyFuncToAll.createDelegate(GraphDataWindow);
-var applyFuncToEach = GraphDataWindow.applyFuncToEach.createDelegate(GraphDataWindow);
-var applyFuncToEachWithInput = GraphDataWindow.applyFuncToEachWithInput.createDelegate(GraphDataWindow);
+var applyFuncToAll = Ext.bind(GraphDataWindow.applyFuncToAll, GraphDataWindow);
+var applyFuncToEach = Ext.bind(GraphDataWindow.applyFuncToEach, GraphDataWindow);
+var applyFuncToEachWithInput = Ext.bind(GraphDataWindow.applyFuncToEachWithInput, GraphDataWindow);
 
 
 function createFunctionsMenu() {
@@ -1213,7 +1213,7 @@ function removeParam(param) {
 /* End of Graph Options API */
 
 function createColorMenu(param) {
-  var colorPicker = new Ext.menu.ColorMenu({hideOnClick: false});
+  var colorPicker = new Ext.menu.ColorPicker({hideOnClick: false});
   colorPicker.on('select',
     function (palette, color) {
       setParam(param, color);

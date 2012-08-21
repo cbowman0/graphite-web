@@ -1,6 +1,7 @@
 var MetricCompleter;
 
-MetricCompleter = Ext.extend(Ext.form.ComboBox, {
+MetricCompleter = {
+  extend: "Ext.form.ComboBox",
   displayField: "path",
   listEmptyText: "No matching metrics",
   mode: 'remote',
@@ -53,6 +54,6 @@ MetricCompleter = Ext.extend(Ext.form.ComboBox, {
       return false;
     }
   }
-});
+};
 
 Ext.reg('metriccompleter', MetricCompleter);

@@ -24,13 +24,14 @@ var cookieProvider = new Ext.state.CookieProvider({
 
 var NAV_BAR_REGION = cookieProvider.get('navbar-region') || 'north';
 
+var RENDER_ENGINE = cookieProvider.get('render-engine') || 'cairo';
+
 var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') != 'false';
 
 /* Nav Bar configuration */
 var navBarNorthConfig = {
   region: 'north',
-  layout: 'hbox',
-  layoutConfig: { align: 'stretch' },
+  layout: { type: 'hbox', align: 'stretch' },
   collapsible: true,
   collapseMode: 'mini',
   split: true,
@@ -49,40 +50,62 @@ navBarWestConfig.width = 338;
 
 
 // Record types and stores
-var SchemeRecord = Ext.data.Record.create([
-  {name: 'name'},
-  {name: 'pattern'},
-  {name: 'fields', type: 'auto'}
-]);
+Ext.define('SchemeRecord', {
+  extend: 'Ext.data.Model',
+  fields: [
+      'name',
+      'pattern',
+      'fields'
+   ]
+});
 
 var schemeRecords = [];
 
 var schemesStore = new Ext.data.Store({
-  fields: SchemeRecord
+  model: 'SchemeRecord'
 });
 
 
-var ContextFieldValueRecord = Ext.data.Record.create([
-  {name: 'name'},
-  {path: 'path'}
-]);
-
-var contextFieldStore = new Ext.data.JsonStore({
-  url: '/metrics/find/',
-  root: 'metrics',
-  idProperty: 'name',
-  fields: ContextFieldValueRecord,
-  baseParams: {format: 'completer', wildcards: '1'}
+Ext.define('ContextFieldValueRecord', {
+  extend: 'Ext.data.Model',
+  fields: [
+      'name',
+      'path'
+  ]
 });
 
+var contextFieldStore = new Ext.data.Store({
+  model: 'ContextFieldValueRecord',
+  proxy: {
+    type: 'ajax',
+    url: '/metrics/find/',
+    extraParams: {format: 'completer', wildcards: '1'},
+    reader: {
+          type: 'json',
+          root: 'metrics',
+          idProperty: 'name'
+    }
+  }
+});
 
-var GraphRecord = new Ext.data.Record.create([
+Ext.define('GraphRecord', {
+  extend: 'Ext.data.Model',
+  fields: [
+      'target',
+      'params',
+      'url',
+      'width',
+      'height',
+  ]
+});
+/* 
   {name: 'target'},
   {name: 'params', type: 'auto'},
   {name: 'url'},
   {name: 'width', type: 'auto'},
   {name: 'height', type: 'auto'}
 ]);
+*/
 
 var graphStore;
 function graphStoreUpdated() {
@@ -90,7 +113,7 @@ function graphStoreUpdated() {
 }
 
 graphStore = new Ext.data.ArrayStore({
-  fields: GraphRecord,
+  model: 'GraphRecord',
   listeners: {
     add: graphStoreUpdated,
     remove: graphStoreUpdated,
@@ -114,6 +137,18 @@ if (sessionDefaultParamsJson && sessionDefaultParamsJson.length > 0) {
   defaultGraphParams = Ext.apply({}, originalDefaultGraphParams);
 }
 
+var treeStore = new Ext.data.TreeStore({
+  proxy: {
+    type: 'ajax',
+    url: '/metrics/find/',
+    extraParams: {format: 'treejson', query: ''},
+    reader: {
+          type: 'json',
+          root: 'metrics',
+          idProperty: 'name'
+    }
+  }
+});
 
 function initDashboard () {
 
@@ -129,7 +164,7 @@ function initDashboard () {
         id: scheme_info.name + '-' + field.name,
         fieldLabel: field.label,
         width: CONTEXT_FIELD_WIDTH,
-        mode: 'remote',
+        queryMode: 'remote',
         triggerAction: 'all',
         editable: true,
         forceSelection: false,
@@ -145,8 +180,9 @@ function initDashboard () {
           change: contextFieldChanged,
           select: function (thisField) { thisField.triggerBlur(); focusCompleter(); },
           afterrender: function (thisField) { thisField.hide(); },
-          hide: function (thisField) { thisField.getEl().up('.x-form-item').setDisplayed(false); },
-          show: function (thisField) { thisField.getEl().up('.x-form-item').setDisplayed(true); }
+//ext4
+//          hide: function (thisField) { thisField.getEl().up('.x-form-item').setDisplayed(false); },
+//          show: function (thisField) { thisField.getEl().up('.x-form-item').setDisplayed(true); }
         }
       }) );
 
@@ -164,7 +200,7 @@ function initDashboard () {
     id: 'metric-type-field',
     fieldLabel: 'Metric Type',
     width: CONTEXT_FIELD_WIDTH,
-    mode: 'local',
+    queryMode: 'local',
     triggerAction: 'all',
     editable: false,
     store: schemesStore,
@@ -180,7 +216,7 @@ function initDashboard () {
         if (index > -1) {
           var record = combo.store.getAt(index);
           combo.setValue(value);
-          metricTypeSelected.defer(250, this, [combo, record, index]);
+//          Ext.defer(metricTypeSelected, 250, this, [combo, record, index]);
         }
       },
       select: metricTypeSelected
@@ -190,7 +226,9 @@ function initDashboard () {
   contextSelector = new Ext.form.FormPanel({
     flex: 1,
     autoScroll: true,
-    labelAlign: 'right',
+    fieldDefaults: {
+      labelAlign: 'right'
+    },
     items: [
       spacer,
       metricTypeCombo
@@ -231,10 +269,12 @@ function initDashboard () {
 
   if (NAV_BAR_REGION == 'west') {
     metricSelectorMode = 'tree';
-    metricSelector = new Ext.tree.TreePanel({
-      root: new Ext.tree.TreeNode({}),
+
+    metricSelector = new Ext.tree.Panel({
+      store: treeStore,
       containerScroll: true,
       autoScroll: true,
+      forceFit: true,
       flex: 3.0,
       pathSeparator: '.',
       rootVisible: false,
@@ -249,28 +289,30 @@ function initDashboard () {
                      }
                    }
       }
+
     });
   } else { // NAV_BAR_REGION == 'north'
     metricSelectorMode = 'text';
+
+    Ext.define('metrics_find', {
+      extend: 'Ext.data.Model',
+      fields: [
+          'path',
+          'is_leaf'
+      ]
+    });
+
     metricSelectorGrid = new Ext.grid.GridPanel({
       region: 'center',
       hideHeaders: true,
       loadMask: true,
-      bodyCssClass: 'metric-result',
-
-      colModel: new Ext.grid.ColumnModel({
-        defaults: {
-          sortable: false,
-          menuDisabled: true
-        },
-        columns: [
-          {header: 'Metric Path', width: 1.0, dataIndex: 'path'}
-        ]
-      }),
+      bodyCls: 'metric-result',
+      forceFit: true,
+      columns: [ 
+          {header: 'Metric Path', sortable: false, menuDisabled: true, width: 1.0, dataIndex: 'path'}
+      ],
       viewConfig: {
-        forceFit: true,
         rowOverCls: '',
-        bodyCssClass: 'metric-result',
         getRowClass: function(record, index) {
           var toggledClass = (
              graphStore.findExact('target', 'target=' + record.data.path) == -1
@@ -281,27 +323,33 @@ function initDashboard () {
           return toggledClass + ' ' + branchClass + ' metric-result';
         }
       },
-      selModel: new Ext.grid.RowSelectionModel({
-        singleSelect: false
-      }),
-      store: new Ext.data.JsonStore({
-        method: 'GET',
-        url: '/metrics/find/',
+//ext4
+//      selModel: new Ext.grid.RowSelectionModel({
+//        singleSelect: false
+//      }),
+      store: new Ext.data.Store({
         autoLoad: true,
-        baseParams: {
-          query: '',
-          format: 'completer',
-          automatic_variants: (UI_CONFIG.automatic_variants) ? '1' : '0'
-        },
+        model: 'metrics_find',
         fields: ['path', 'is_leaf'],
-        root: 'metrics'
+        proxy: {
+          type: 'ajax',
+          url: '/metrics/find/',
+          extraParams: {query: '',
+                        format: 'completer',
+                        automatic_variants: (UI_CONFIG.automatic_variants) ? '1' : '0'
+                       },
+          reader: {
+                type: 'json',
+                root: 'metrics',
+          }
+        }
       }),
       listeners: {
-        rowclick: function (thisGrid, rowIndex, e) {
-                    var record = thisGrid.getStore().getAt(rowIndex);
+        itemclick: function (thisGrid, record, item, rowIndex, e) {
                     if (record.data['is_leaf'] == '1') {
                       graphAreaToggle(record.data.path);
-                      thisGrid.getView().refresh();
+//XXX Why is this refresh here?
+//                      thisGrid.refresh();
                     } else {
                       metricSelectorTextField.setValue(record.data.path);
                     }
@@ -341,11 +389,13 @@ function initDashboard () {
   var autocompleteTask = new Ext.util.DelayedTask(function () {
     var query = metricSelectorTextField.getValue();
     var store = metricSelectorGrid.getStore();
-    store.setBaseParam('query', query);
+    store.proxy.extraParams.query=query;
     store.load();
   });
 
-  var graphTemplate = new Ext.XTemplate(
+  var graphTemplate;
+  if (RENDER_ENGINE == 'cairo') {
+    graphTemplate = new Ext.XTemplate(
     '<tpl for=".">',
       '<div class="graph-container">',
         '<div class="graph-overlay">',
@@ -356,6 +406,10 @@ function initDashboard () {
     '</tpl>',
     '<div class="x-clear"></div>'
   );
+  } else {
+    graphTemplate = new Ext.XTemplate(
+  );
+  }
 
   function setupGraphDD () {
     graphView.dragZone = new Ext.dd.DragZone(graphView.getEl(), {
@@ -396,7 +450,7 @@ function initDashboard () {
         //Ext.fly(target).addClass('graph-highlight');
         this.setDropAction('reorder');
         this.mergeTarget = Ext.get(target);
-        this.mergeSwitchTimeout = this.setDropAction.defer(UI_CONFIG.merge_hover_delay, this, ['merge']);
+        this.mergeSwitchTimeout = Ext.defer(this.setDropAction, UI_CONFIG.merge_hover_delay, this, ['merge']);
       },
 
       onNodeOut: function (target, dd, e, data) {
@@ -443,7 +497,11 @@ function initDashboard () {
         if (this.dropAction == 'reorder') {
           graphStore.removeAt(dragIndex);
           graphStore.insert(dropIndex, data.draggedRecord);
-          updateGraphRecords();
+          if ( RENDER_ENGINE == 'cairo' ) {
+              updateGraphRecords();
+          } else {
+              refreshGraphs();
+          }
           return true;
         } else if (this.dropAction == 'merge') {
           var dragRecord = data.draggedRecord;
@@ -459,7 +517,11 @@ function initDashboard () {
           dropRecord.data.target = Ext.urlEncode({target: mergedTargets});
           dropRecord.commit();
           graphStore.remove(dragRecord);
-          updateGraphRecords();
+          if ( RENDER_ENGINE == 'cairo' ) {
+              updateGraphRecords();
+          } else {
+              refreshGraphs();
+          }
           return true;
         }
         return false;
@@ -470,8 +532,10 @@ function initDashboard () {
   graphView = new Ext.DataView({
     store: graphStore,
     tpl: graphTemplate,
-    overClass: 'graph-over',
+    trackOver: true,
+    overItemCls: 'graph-over',
     itemSelector: 'div.graph-container',
+    deferEmptyText: false,
     emptyText: "Configure your context above, and then select some metrics.",
     autoScroll: true,
 //    plugins: [
@@ -481,7 +545,7 @@ function initDashboard () {
 //      })
 //    ],
     listeners: {
-      click: graphClicked,
+      itemclick: graphClicked,
       render: setupGraphDD
     }
   });
@@ -577,6 +641,9 @@ function initDashboard () {
           text: "Edit Default Parameters",
           handler: editDefaultGraphParameters
         }, {
+          text: "Edit Default Render Engine",
+          handler: editDefaultRenderEngine
+        }, {
           text: "Resize",
           handler: selectGraphSize
         }, {
@@ -669,14 +736,14 @@ function initDashboard () {
   var lastRefreshedText = {
     id: 'last-refreshed-text',
     xtype: 'tbtext',
-    text: ( new Date() ).format('g:i:s A')
+    text: ( Ext.Date.format(new Date(), 'g:i:s A') )
   };
 
   graphArea = new Ext.Panel({
     region: 'center',
     layout: 'fit',
     autoScroll: false,
-    bodyCssClass: 'graph-area-body',
+    bodyCls: 'graph-area-body',
     items: [graphView],
     tbar: new Ext.Toolbar({
       items: [
@@ -716,6 +783,43 @@ function initDashboard () {
     ]
   });
 
+
+  // Keymappings
+  var specialKeys = {
+    space: 32,
+    enter: Ext.EventObject.ENTER,
+    backspace: Ext.EventObject.BACKSPACE
+  };
+
+  var keyMapConfigs = [{
+          key: "t",
+          ctrl:true,
+          shift:true,
+          fn: function(){ alert('Control + shift + tab was pressed.'); }
+      }];
+  
+  for (var event_name in UI_CONFIG.keyboard_shortcuts) {
+    var config = {handler: keyEventHandlers[event_name]};
+    if (!config.handler) {
+      continue;
+    }
+    var keyString = UI_CONFIG.keyboard_shortcuts[event_name];
+    var keys = keyString.split('-');
+    config.ctrl = keys.indexOf('ctrl') > -1;
+    config.alt = keys.indexOf('alt') > -1;
+    config.shift = keys.indexOf('shift') > -1;
+    config.key = keys[keys.length - 1];
+    if (specialKeys[config.key]) {
+      config.key = specialKeys[config.key];
+    }
+    keyMapConfigs.push(config);
+  }
+  
+  var keyMap = new Ext.util.KeyMap({
+      target: viewport,
+      binding: keyMapConfigs
+  });
+
   refreshTask = {
     run: refreshGraphs,
     interval: UI_CONFIG.refresh_interval * 1000
@@ -749,8 +853,8 @@ function showHelp() {
   win.show();
 }
 
-function metricTypeSelected (combo, record, index) {
-  selectedScheme = record;
+function metricTypeSelected (combo, record, e) {
+  selectedScheme = record[0];
 
   // Show only the fields for the selected context
   Ext.each(contextSelectorFields, function (field) {
@@ -826,7 +930,7 @@ function getContextFieldsPattern() {
 
   Ext.each(fields, function (field) {
     var id = schemeName + '-' + field.name;
-    var value = Ext.getCmp(id).getValue();
+    var value = Ext.getCmp(id).getValue() || '';
 
     // Update context field cookies
     setContextFieldCookie(field.name, value);
@@ -862,42 +966,35 @@ function metricSelectorShow(pattern) {
 function metricTreeSelectorShow(pattern) {
   var base_parts = pattern.split('.');
 
-  function setParams (loader, node, callback) {
-    loader.baseParams.format = 'treejson';
 
-    if (node.id == 'rootMetricSelectorNode') {
-      loader.baseParams.query = pattern + '.*';
-    } else {
-      var id_parts = node.id.split('.');
-      id_parts.splice(0, base_parts.length); //make it relative
-      var relative_id = id_parts.join('.');
-      loader.baseParams.query = pattern + '.' + relative_id + '.*';
-    }
+/*
+  if (node.id == 'rootMetricSelectorNode') {
+    treeStore..proxy.extraParams.query = pattern + '.*';
+  } else {
+    var id_parts = node.id.split('.');
+    id_parts.splice(0, base_parts.length); //make it relative
+    var relative_id = id_parts.join('.');
+    treeStore.proxy.extraParams.query = pattern + '.' + relative_id + '.*';
   }
+*/
 
-  var loader = new Ext.tree.TreeLoader({
-    url: '/metrics/find/',
-    requestMethod: 'GET',
-    listeners: {beforeload: setParams}
-  });
+  treeStore.proxy.extraParams.query = pattern + '.*';
 
-  try {
+/*  try {
     var oldRoot = Ext.getCmp('rootMetricSelectorNode');
     oldRoot.destroy();
   } catch (err) { }
+*/
 
-  var root = new Ext.tree.AsyncTreeNode({
-    id: 'rootMetricSelectorNode',
-    loader: loader
-  });
+  treeStore.load()
 
-  metricSelector.setRootNode(root);
-  root.expand();
+//  metricSelector.setRootNode(root);
+//  root.expand();
 }
 
 function metricTextSelectorShow(pattern) {
   var store = metricSelectorGrid.getStore();
-  store.setBaseParam('query', pattern);
+  store.proxy.extraParams.query=pattern;
   store.load();
 }
 
@@ -953,7 +1050,11 @@ function graphAreaToggle(target, options) {
       url: '/render?' + Ext.urlEncode(urlParams)
     });
     graphStore.add([record]);
-    updateGraphRecords();
+    if (RENDER_ENGINE == 'cairo') {
+      updateGraphRecords();
+    } else {
+
+    }
   }
 }
 
@@ -1023,7 +1124,23 @@ function updateGraphRecords() {
 function refreshGraphs() {
   updateGraphRecords();
   graphView.refresh();
-  graphArea.getTopToolbar().get('last-refreshed-text').setText( (new Date()).format('g:i:s A') );
+  if (RENDER_ENGINE != 'cairo') {
+    graphStore.each(function () {
+      var graphTargetString = this.data.target;
+      if (this.data.target.substr(0,7) == "target=") {
+        graphTargetString = this.data.target;
+      } else {
+        graphTargetString = "target=" + this.data.target;
+      }
+      var graphTargetList = Ext.urlDecode(graphTargetString)['target'];
+      if (typeof graphTargetList == 'string') {
+        graphTargetList = [graphTargetList];
+      }
+      $(".graphite" + this.data.index).graphiteGraph("#graph" + this.data.index, "", graphTargetList, this.data.params.from, this.data.params.until, Boolean(this.data.params.areaMode));
+    });
+  }
+  var tbar = graphArea.dockedItems.findBy(function(inItem) { return inItem.alias == 'widget.toolbar' && inItem.dock == 'top'; })
+  tbar.getComponent('last-refreshed-text').setText( Ext.Date.format(new Date(), 'g:i:s A') );
 }
 
 /*
@@ -1065,14 +1182,14 @@ function updateAutoRefresh (newValue) {
 /* Task management */
 function stopTask(task) {
   if (task.running) {
-    Ext.TaskMgr.stop(task);
+    Ext.TaskManager.stop(task);
     task.running = false;
   }
 }
 
 function startTask(task) {
   if (!task.running) {
-    Ext.TaskMgr.start(task);
+    Ext.TaskManager.start(task);
     task.running = true;
   }
 }
@@ -1109,7 +1226,8 @@ function getTimeText() {
 }
 
 function updateTimeText() {
-  graphArea.getTopToolbar().get('time-range-text').setText( getTimeText() );
+  var tbar = graphArea.dockedItems.findBy(function(inItem) { return inItem.alias == 'widget.toolbar' && inItem.dock == 'top'; })
+  tbar.getComponent('time-range-text').setText( getTimeText() );
 }
 
 function timeRangeUpdated() {
@@ -1141,7 +1259,7 @@ function timeRangeUpdated() {
 function selectRelativeTime() {
   var quantityField = new Ext.form.TextField({
     fieldLabel: "Show the past",
-    width: 90,
+    labelWidth: 90,
     allowBlank: false,
     regex: /\d+/,
     regexText: "Please enter a number",
@@ -1150,8 +1268,8 @@ function selectRelativeTime() {
 
   var unitField = new Ext.form.ComboBox({
     fieldLabel: "",
-    width: 90,
-    mode: 'local',
+    labelWidth: 90,
+    queryMode: 'local',
     editable: false,
     triggerAction: 'all',
     allowBlank: false,
@@ -1163,7 +1281,7 @@ function selectRelativeTime() {
   var untilQuantityField = new Ext.form.TextField({
     id: 'until-quantity-field',
     fieldLabel: "Until",
-    width: 90,
+    labelWidth: 90,
     allowBlank: true,
     regex: /\d+/,
     regexText: "Please enter a number",
@@ -1172,8 +1290,8 @@ function selectRelativeTime() {
 
   var untilUnitField = new Ext.form.ComboBox({
     fieldLabel: "",
-    width: 90,
-    mode: 'local',
+    labelWidth: 90,
+    queryMode: 'local',
     editable: false,
     triggerAction: 'all',
     allowBlank: true,
@@ -1219,15 +1337,18 @@ function selectRelativeTime() {
     height: 170,
     resizable: false,
     modal: true,
-    layout: 'form',
     labelAlign: 'right',
     labelWidth: 90,
     items: [quantityField, unitField, untilQuantityField, untilUnitField],
-    buttonAlign: 'center',
-    buttons: [
-      {text: 'Ok', handler: updateTimeRange},
-      {text: 'Cancel', handler: function () { win.close(); } }
-    ]
+    fbar: {
+      layout: {
+        pack:'center'
+      },
+      items: [
+        {text: 'Ok', handler: updateTimeRange},
+        {text: 'Cancel', handler: function () { win.close(); } }
+      ]
+    }
   });
   win.show();
 }
@@ -1283,11 +1404,15 @@ function selectAbsoluteTime() {
     labelAlign: 'right',
     labelWidth: 70,
     items: [startDateField, startTimeField, endDateField, endTimeField],
-    buttonAlign: 'center',
-    buttons: [
-      {text: 'Ok', handler: updateTimeRange},
-      {text: 'Cancel', handler: function () { win.close(); } }
-    ]
+    fbar: {
+      layout: {
+        pack:'center'
+      },
+      items: [
+        {text: 'Ok', handler: updateTimeRange},
+        {text: 'Cancel', handler: function () { win.close(); } }
+      ]
+    }
   });
   win.show();
 }
@@ -1490,6 +1615,61 @@ function editDefaultGraphParameters() {
   win.show();
 }
 
+
+function updateRenderEngine(engine) {
+  if (engine == RENDER_ENGINE) {
+    return;
+  }
+
+  cookieProvider.set('render-engine', engine);
+  RENDER_ENGINE = engine;
+
+  if (graphStore.getCount() == 0) {
+    window.location.reload()
+  } else {
+    Ext.Msg.alert('Cookie Updated', "You must refresh the page to update the render engine.");
+    //TODO prompt the user to save their dashboard and refresh for them
+  }
+}
+
+function editDefaultRenderEngine() {
+
+  function applyRenderEngineChange() {
+    if (Ext.getCmp('cairo-radio').getValue()) {
+      updateRenderEngine('cairo');
+    } else {
+      updateRenderEngine('chart');
+    }
+    configure_re_win.close();
+    configure_re_win = null;
+  }
+
+  configure_re_win = new Ext.Window({
+    title: "Configure Render Engine",
+    layout: 'form',
+    width: 350,
+    height: 125,
+    labelWidth: 140,
+    labelAlign: 'right',
+    items: [
+      {
+        id: 'cairo-radio',
+        xtype: "radio",
+        fieldLabel: "Cairo",
+        boxLabel: "Cairo",
+        name: "render-engine",
+        inputValue: "cairo",
+        checked: (RENDER_ENGINE == 'cairo')
+      }
+    ],
+    buttons: [
+      {text: 'Ok', handler: applyRenderEngineChange},
+      {text: 'Cancel', handler: function () { configure_re_win.close(); configure_re_win = null; } }
+    ]
+  });
+  configure_re_win.show();
+}
+
 function selectGraphSize() {
   var presetCombo = new Ext.form.ComboBox({
     fieldLabel: "Preset",
@@ -1497,7 +1677,7 @@ function selectGraphSize() {
     editable: false,
     forceSelection: true,
     triggerAction: 'all',
-    mode: 'local',
+    queryMode: 'local',
     value: 'Custom',
     store: ['Custom', 'Small', 'Medium', 'Large'],
     listeners: {
@@ -1688,9 +1868,9 @@ function showJsonURL() {
 var targetGrid;
 var activeMenu;
 
-function graphClicked(graphView, graphIndex, element, evt) {
+function graphClicked(graphView, graphIndex, item, index, evt) {
   Ext.get('merge').hide();
-  var record = graphStore.getAt(graphIndex);
+  var record = graphStore.getAt(graphIndex.data.index);
   if (!record) {
     return;
   }
@@ -1740,8 +1920,16 @@ function graphClicked(graphView, graphIndex, element, evt) {
   var functionsButton;
   var targets = record.data.params.target;
   targets = map(targets, function (t) { return {target: t}; });
-  var targetStore = new Ext.data.JsonStore({
-    fields: ['target'],
+
+  Ext.define('targets', {
+    extend: 'Ext.data.Model',
+    fields: [
+        'target'
+    ]
+  });
+
+  var targetStore = new Ext.data.Store({
+    model: 'targets',
     data: targets,
     listeners: {
       update: function (thisStore, record, operation) {
@@ -1752,7 +1940,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
         refreshGraphs();
       }
     }
-  });
+  });    
 
   var buttonWidth = 150;
   var rowHeight = 21;
@@ -1761,67 +1949,40 @@ function graphClicked(graphView, graphIndex, element, evt) {
   var gridWidth = (buttonWidth * 3) + 2;
   var gridHeight = (rowHeight * Math.min(targets.length, maxRows)) + frameHeight;
 
-  targetGrid = new Ext.grid.EditorGridPanel({
+  targetGrid = new Ext.grid.Panel({
+    selType: 'cellmodel',
+    plugins: [
+        Ext.create('Ext.grid.plugin.CellEditing', {
+            clicksToEdit: 2
+        })
+    ],
     //frame: true,
     width: gridWidth,
     height: gridHeight,
     store: targetStore,
     hideHeaders: true,
     viewConfig: {markDirty: false},
-    colModel: new Ext.grid.ColumnModel({
-      columns: [
-        {
-          id: 'target',
-          header: 'Target',
-          dataIndex: 'target',
-          width: gridWidth - 22,
-          editor: {xtype: 'textfield'}
-        }
-      ]
-    }),
-    selModel: new Ext.grid.RowSelectionModel({
-      singleSelect: false,
-      listeners: {
-        selectionchange: function (thisSelModel) {
-          functionsButton.setDisabled(thisSelModel.getCount() == 0);
-        }
+    columns: [
+      {
+        header: 'Target',
+        dataIndex: 'target',
+        width: gridWidth - 22,
+        editor: {xtype: 'textfield'}
       }
-    }),
-    clicksToEdit: 2,
+    ],
     listeners: {
-      afterrender: function (thisGrid) {
-        thisGrid.getSelectionModel().selectFirstRow.defer(50, thisGrid.getSelectionModel());
+      select: function (thisSelModel) {
+        functionsButton.setDisabled(thisSelModel.getCount() == 0);
       }
     }
   });
+
   menuItems.push(targetGrid);
-
-  /* Setup our menus */
-  var functionsMenu = new Ext.menu.Menu({
-    allowOtherMenus: true,
-    items: createFunctionsMenu().concat([ {text: 'Remove Outer Call', handler: removeOuterCall} ])
-  });
-
-  functionsButton = new Ext.Button({
-    text: 'Apply Function',
-    disabled: true,
-    width: buttonWidth,
-    handler: function (thisButton) {
-               if (functionsMenu.isVisible()) {
-                 functionsMenu.hide();
-               } else {
-                 operationsMenu.hide();
-                 optionsMenu.doHide(); // private method... yuck
-                 functionsMenu.show(thisButton.getEl());
-               }
-             }
-  });
-
 
   var optionsMenuConfig = createOptionsMenu(); // defined in composer_widgets.js
   optionsMenuConfig.allowOtherMenus = true;
   var optionsMenu = new Ext.menu.Menu(optionsMenuConfig);
-  optionsMenu.on('hide', function () { menu.hide(); });
+//  optionsMenu.on('hide', function () { menu.hide(); });
   updateCheckItems();
 
   var operationsMenu = new Ext.menu.Menu({
@@ -1884,6 +2045,27 @@ function graphClicked(graphView, graphIndex, element, evt) {
     }]
   });
 
+  /* Setup our menus */
+  var functionsMenu = new Ext.menu.Menu({
+    allowOtherMenus: true,
+    items: createFunctionsMenu().concat([ {text: 'Remove Outer Call', handler: removeOuterCall} ])
+  });
+
+  functionsButton = new Ext.Button({
+    text: 'Apply Function',
+    disabled: true,
+    width: buttonWidth,
+    handler: function (thisButton) {
+               if (functionsMenu.isVisible()) {
+                 functionsMenu.hide();
+               } else {
+                 operationsMenu.hide();
+                 optionsMenu.hide(); // private method... yuck
+                 functionsMenu.show(thisButton.getEl());
+               }
+             }
+  });
+
   var buttons = [functionsButton];
 
   buttons.push({
@@ -1892,7 +2074,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
     width: buttonWidth,
     handler: function (thisButton) {
                if (optionsMenu.isVisible()) {
-                 optionsMenu.doHide(); // private method... yuck (no other way to hide w/out trigging hide event handler)
+                 optionsMenu.hide(); // private method... yuck (no other way to hide w/out trigging hide event handler)
                } else {
                  operationsMenu.hide();
                  functionsMenu.hide();
@@ -1909,7 +2091,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
                if (operationsMenu.isVisible()) {
                  operationsMenu.hide();
                } else {
-                 optionsMenu.doHide(); // private method... yuck
+                 optionsMenu.hide(); // private method... yuck
                  functionsMenu.hide();
                  operationsMenu.show(thisButton.getEl());
                }
@@ -1930,8 +2112,8 @@ function graphClicked(graphView, graphIndex, element, evt) {
   activeMenu = menu;
   var position = evt.getXY();
   position[0] -= (buttonWidth * 1.5) + 10; //horizontally center menu with the mouse
-  menu.showAt(position);
-  menu.get(0).focus(false, 50);
+  menu.showAt(position[0], position[1]);
+  menu.getComponent(0).focus(false, 50);
   menu.keyNav.disable();
   menu.on('hide', function () {
                     var graphMenuParams = Ext.getCmp('graphMenuParams');
@@ -1940,12 +2122,14 @@ function graphClicked(graphView, graphIndex, element, evt) {
                     }
                   }
   );
+
   menu.on('destroy', function () {
                        optionsMenu.destroy();
                        operationsMenu.destroy();
                        functionsMenu.destroy();
                      }
   );
+
 }
 
 
@@ -2147,8 +2331,7 @@ function removeAllGraphs() {
       width: 200,
       height: 120,
       modal: true,
-      layout: 'vbox',
-      layoutConfig: { align: 'center' },
+      layout: {type: 'vbox', align: 'center' },
       items: [
         {
           xtype: 'label',
@@ -2194,7 +2377,7 @@ function removeAllGraphs() {
 
 
 function toggleToolbar() {
-  var tbar = graphArea.getTopToolbar();
+  var tbar = graphArea.dockedItems.findBy(function(inItem) { return inItem.alias == 'widget.toolbar' && inItem.dock == 'top'; })
   tbar.setVisible( ! tbar.isVisible() );
   graphArea.doLayout();
 }
@@ -2243,33 +2426,6 @@ var keyEventHandlers = {
       }
     }
 };
-
-var specialKeys = {
-  space: 32,
-  enter: Ext.EventObject.ENTER,
-  backspace: Ext.EventObject.BACKSPACE
-};
-
-var keyMapConfigs = [];
-
-for (var event_name in UI_CONFIG.keyboard_shortcuts) {
-  var config = {handler: keyEventHandlers[event_name]};
-  if (!config.handler) {
-    continue;
-  }
-  var keyString = UI_CONFIG.keyboard_shortcuts[event_name];
-  var keys = keyString.split('-');
-  config.ctrl = keys.indexOf('ctrl') > -1;
-  config.alt = keys.indexOf('alt') > -1;
-  config.shift = keys.indexOf('shift') > -1;
-  config.key = keys[keys.length - 1];
-  if (specialKeys[config.key]) {
-    config.key = specialKeys[config.key];
-  }
-  keyMapConfigs.push(config);
-}
-
-var keyMap = new Ext.KeyMap(document, keyMapConfigs);
 
 
 /* Dashboard functions */
@@ -2597,28 +2753,67 @@ function showTemplateFinder() {
   var templatesList;
   var queryField;
   var hostidField;
-  var templatesStore = new Ext.data.JsonStore({
-    url: "/dashboard/find_template/",
-    method: 'GET',
-    params: {query: "e"},
-    fields: ['name'],
-    root: 'templates',
+
+
+  queryField = new Ext.form.TextField({
+    region: 'south',
+    deferEmptyText: false,
+    emptyText: "filter template listing",
+    enableKeyEvents: true,
     listeners: {
-      beforeload: function (store) {
-                    store.setBaseParam('query', queryField.getValue());
+      keyup: function (field, e) {
+                  if (e.getKey() == e.ENTER) {
+                    sendLoadRequest(field.getValue());
+                    win.close();
+                  } else {
+                    queryUpdateTask.delay(FINDER_QUERY_DELAY);
                   }
+                }
     }
   });
 
-  var hostidsStore = new Ext.data.JsonStore({
-    url: "/metrics/list/",
-    method: 'GET',
-    fields: ['path'],
-    root: 'metrics',
+  Ext.define('find_template', {
+    extend: 'Ext.data.Model',
+    fields: [
+        'name'
+    ]
+  });
+
+  var templatesStore = new Ext.data.Store({
+    model: 'find_template',
+    proxy: {
+      type: 'ajax',
+      url: '/dashboard/find_template/',
+      extraParams: {query: queryField.getValue()},
+      reader: {
+            type: 'json',
+            root: 'templates'
+      }
+    }
+  });
+
+  Ext.define('metrics_list', {
+    extend: 'Ext.data.Model',
+    fields: [
+        'path'
+    ]
+  });
+
+  var hostidsStore = new Ext.data.Store({
+    model: 'metrics_list',
+    proxy: {
+      type: 'ajax',
+      url: '/metrics/list/',
+      extraParams: {query: ''},
+      reader: {
+            type: 'json',
+            root: 'metrics'
+      }
+    }
   });
 
   function openSelected() {
-    var selected = templatesList.getSelectedRecords();
+    var selected = templatesList.getSelectionModel().getSelection();
     if (selected.length > 0) {
       sendLoadTemplateRequest(selected[0].data.name, hostidField.getValue());
     }
@@ -2626,7 +2821,7 @@ function showTemplateFinder() {
   }
 
   function deleteSelected() {
-    var selected = templatesList.getSelectedRecords();
+    var selected = templatesList.getSelectionModel().getSelection();
     if (selected.length > 0) {
       var record = selected[0];
       var name = record.data.name;
@@ -2646,10 +2841,12 @@ function showTemplateFinder() {
   }
 
   templatesList = new Ext.list.ListView({
+    forceFit: true,
     columns: [
-      {header: 'Template', width: 1.0, dataIndex: 'name', sortable: false}
+      {header: 'Template', sortable: false, menuDisabled: true, width: 1.0, dataIndex: 'name'}
     ],
     columnSort: false,
+    deferEmptyText: false,
     emptyText: "No templates found",
     hideHeaders: true,
     listeners: {
@@ -2666,7 +2863,7 @@ function showTemplateFinder() {
                        },
 
     },
-    overClass: '',
+    overItemCls: '',
     region: 'center',
     reserveScrollOffset: true,
     singleSelect: true,
@@ -2679,6 +2876,7 @@ function showTemplateFinder() {
     function () {
       var currentQuery = queryField.getValue();
       if (lastQuery != currentQuery) {
+        templatesStore.proxy.extraParams.query=currentQuery;
         templatesStore.load();
       }
       lastQuery = currentQuery;
@@ -2690,34 +2888,19 @@ function showTemplateFinder() {
     function () {
       var currentHostid = hostidField.getValue();
       if (lastHostid != currentHostid) {
+        hostidsStore.proxy.extraParams.query=currentQuery;
         hostidsStore.load();
       }
       lastHostid = currentHostid;
     }
   );
 
-  queryField = new Ext.form.TextField({
-    region: 'south',
-    emptyText: "filter template listing",
-    enableKeyEvents: true,
-    listeners: {
-      keyup: function (field, e) {
-                  if (e.getKey() == e.ENTER) {
-                    sendLoadRequest(field.getValue());
-                    win.close();
-                  } else {
-                    queryUpdateTask.delay(FINDER_QUERY_DELAY);
-                  }
-                }
-    }
-  });
-
   hostidField = new Ext.form.ComboBox({
     id: 'hostid-field',
 
     triggerAction:'all',
     typeAhead:false,
-    mode:'remote',
+    queryMode:'remote',
     minChars:0,
     forceSelection:false,
     hideTrigger: false,
@@ -2727,6 +2910,7 @@ function showTemplateFinder() {
 
     allowBlank: false,
     region: 'north',
+    deferEmptyText: false,
     emptyText: "apply to the host",
   });
 
@@ -2768,21 +2952,9 @@ function showDashboardFinder() {
   var win;
   var dashboardsList;
   var queryField;
-  var dashboardsStore = new Ext.data.JsonStore({
-    url: "/dashboard/find/",
-    method: 'GET',
-    params: {query: "e"},
-    fields: ['name'],
-    root: 'dashboards',
-    listeners: {
-      beforeload: function (store) {
-                    store.setBaseParam('query', queryField.getValue());
-                  }
-    }
-  });
 
   function openSelected() {
-    var selected = dashboardsList.getSelectedRecords();
+    var selected = dashboardsList.getSelectionModel().getSelection();
     if (selected.length > 0) {
       sendLoadRequest(selected[0].data.name);
     }
@@ -2790,7 +2962,7 @@ function showDashboardFinder() {
   }
 
   function deleteSelected() {
-    var selected = dashboardsList.getSelectedRecords();
+    var selected = dashboardsList.getSelectionModel().getSelection();
     if (selected.length > 0) {
       var record = selected[0];
       var name = record.data.name;
@@ -2809,16 +2981,67 @@ function showDashboardFinder() {
     }
   }
 
+  var lastQuery = null;
+  var queryUpdateTask = new Ext.util.DelayedTask(
+    function () {
+      var currentQuery = queryField.getValue();
+      if (lastQuery != currentQuery) {
+        dashboardsStore.proxy.extraParams.query=currentQuery;
+        dashboardsStore.load();
+      }
+      lastQuery = currentQuery;
+    }
+  );
+
+  queryField = new Ext.form.TextField({
+    region: 'south',
+    deferEmptyText: false,
+    emptyText: "filter dashboard listing",
+    enableKeyEvents: true,
+    listeners: {
+      keyup: function (field, e) {
+                  if (e.getKey() == e.ENTER) {
+                    sendLoadRequest(field.getValue());
+                    win.close();
+                  } else {
+                    queryUpdateTask.delay(FINDER_QUERY_DELAY);
+                  }
+                }
+    }
+  });
+
+  Ext.define('showdashboardfinderquery', {
+    extend: 'Ext.data.Model',
+    fields: [
+        'name'
+    ]
+  });
+
+  var dashboardsStore = new Ext.data.Store({
+    model: 'showdashboardfinderquery',
+    proxy: {
+      type: 'ajax',
+      url: '/dashboard/find/',
+      extraParams: {query: queryField.getValue()},
+      reader: {
+            type: 'json',
+            root: 'dashboards'
+      }
+    }
+  });
+
   dashboardsList = new Ext.list.ListView({
+    forceFit: true,
     columns: [
-      {header: 'Dashboard', width: 1.0, dataIndex: 'name', sortable: false}
+      {header: 'Dashboard', sortable: false, menuDisabled: true, width: 1.0, dataIndex: 'name'}
     ],
     columnSort: false,
+    deferEmptyText: false,
     emptyText: "No dashboards found",
     hideHeaders: true,
     listeners: {
-      selectionchange: function (listView, selections) {
-                         if (listView.getSelectedRecords().length == 0) {
+      selectionchange: function (listView, index, node, e) {
+                         if (node.length == 0) {
                            Ext.getCmp('finder-open-button').disable();
                            Ext.getCmp('finder-delete-button').disable();
                          } else {
@@ -2833,39 +3056,12 @@ function showDashboardFinder() {
                   win.close();
                 }
     },
-    overClass: '',
+    overItemCls: '',
     region: 'center',
     reserveScrollOffset: true,
     singleSelect: true,
     store: dashboardsStore,
     style: "background-color: white;"
-  });
-
-  var lastQuery = null;
-  var queryUpdateTask = new Ext.util.DelayedTask(
-    function () {
-      var currentQuery = queryField.getValue();
-      if (lastQuery != currentQuery) {
-        dashboardsStore.load();
-      }
-      lastQuery = currentQuery;
-    }
-  );
-
-  queryField = new Ext.form.TextField({
-    region: 'south',
-    emptyText: "filter dashboard listing",
-    enableKeyEvents: true,
-    listeners: {
-      keyup: function (field, e) {
-                  if (e.getKey() == e.ENTER) {
-                    sendLoadRequest(field.getValue());
-                    win.close();
-                  } else {
-                    queryUpdateTask.delay(FINDER_QUERY_DELAY);
-                  }
-                }
-    }
   });
 
   win = new Ext.Window({
@@ -2895,6 +3091,7 @@ function showDashboardFinder() {
       }
     ]
   });
+
   dashboardsStore.load();
   win.show();
 }
@@ -2932,13 +3129,13 @@ function addTargetToSelectedGraph(target) {
 }
 
 function removeTargetFromSelectedGraph(target) {
-  selectedRecord.data.params.target.remove(target);
+  Ext.Array.remove(selectedRecord.data.params.target, (target));
   selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
 }
 
 function getSelectedTargets() {
   if (targetGrid) {
-    return map(targetGrid.getSelectionModel().getSelections(), function (r) {
+    return map(targetGrid.getSelectionModel().getSelection(), function (r) {
       return r.data.target;
     });
   }
@@ -2948,7 +3145,7 @@ function getSelectedTargets() {
 function applyFuncToEach(funcName, extraArg) {
 
   function applyFunc() {
-    Ext.each(targetGrid.getSelectionModel().getSelections(),
+    Ext.each(targetGrid.getSelectionModel().getSelection(),
       function (record) {
         var target = record.data.target;
         var newTarget;
@@ -2968,9 +3165,9 @@ function applyFuncToEach(funcName, extraArg) {
         }
 
         // Add newTarget to selectedRecord
-        targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
+        targetStore.add([{target: newTarget}]);
         addTargetToSelectedGraph(newTarget);
-        targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
+        targetGrid.getSelectionModel().select(targetStore.findExact('target', newTarget), true);
       }
     );
     refreshGraphs();
@@ -3000,7 +3197,7 @@ function applyFuncToEachWithInput (funcName, question, options) {
       "" //initial value
     );
   }
-  applyFunc = applyFunc.createDelegate(this);
+  applyFunc = Ext.bind(applyFunc, this);
   return applyFunc;
 }
 
@@ -3010,23 +3207,23 @@ function applyFuncToAll (funcName) {
     var newTarget = funcName + '(' + args + ')';
     var targetStore = targetGrid.getStore();
 
-    Ext.each(targetGrid.getSelectionModel().getSelections(),
+    Ext.each(targetGrid.getSelectionModel().getSelection(),
       function (record) {
         targetStore.remove(record);
         removeTargetFromSelectedGraph(record.data.target);
       }
     );
-    targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
+    targetStore.add({target: newTarget});
     addTargetToSelectedGraph(newTarget);
-    targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
+    targetGrid.getSelectionModel().select(targetStore.findExact('target', newTarget), true);
     refreshGraphs();
   }
-  applyFunc = applyFunc.createDelegate(this);
+  applyFunc = Ext.bind(applyFunc, this);
   return applyFunc;
 }
 
 function removeOuterCall() { // blatantly repurposed from composer_widgets.js (don't hate)
-  Ext.each(targetGrid.getSelectionModel().getSelections(), function (record) {
+  Ext.each(targetGrid.getSelectionModel().getSelection(), function (record) {
     var target = record.data.target;
     var targetStore = targetGrid.getStore();
     var args = [];
@@ -3050,13 +3247,13 @@ function removeOuterCall() { // blatantly repurposed from composer_widgets.js (d
     args.push( argString.substring(lastArg, i) );
 
     targetStore.remove(record);
-    selectedRecord.data.params.target.remove(target);
+    Ext.Array.remove(selectedRecord.data.params.target, target);
 
     Ext.each(args, function (arg) {
       if (!arg.match(/^([0123456789\.]+|".+")$/)) { //Skip string and number literals
-        targetStore.add([ new targetStore.recordType({target: arg}) ]);
+        targetStore.add([{target: arg}]);
         selectedRecord.data.params.target.push(arg);
-        targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', arg), true);
+        targetGrid.getSelectionModel().select(targetStore.findExact('target', arg), true);
       }
     });
   });

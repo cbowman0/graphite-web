@@ -3,7 +3,7 @@
 <html>
   <head>
     <title>Graphite Dashboard</title>
-    <link rel="stylesheet" type="text/css" href="/content/js/ext/resources/css/ext-all.css"/>
+    <link rel="stylesheet" type="text/css" href="/content/js/ext4/resources/css/ext-all.css"/>
     <link rel="stylesheet" type="text/css" href="/content/css/dashboard.css"/>
 
     <script type="text/javascript">
@@ -14,13 +14,13 @@
     var FINDER_QUERY_DELAY = 100;
     var NEW_DASHBOARD_REMOVE_GRAPHS = false;
 
-    var RESIZE_ICON   = '/content/js/ext/examples/shared/icons/fam/cog_edit.png';
-    var REMOVE_ICON   = '/content/js/ext/examples/shared/icons/fam/cross.gif';
-    var REFRESH_ICON  = '/content/js/ext/examples/shared/icons/fam/table_refresh.png';
-    var SHARE_ICON    = '/content/js/ext/examples/shared/icons/fam/application_go.png';
+    var RESIZE_ICON   = '/content/js/ext4/examples/shared/icons/fam/cog_edit.png';
+    var REMOVE_ICON   = '/content/js/ext4/examples/shared/icons/fam/cross.gif';
+    var REFRESH_ICON  = '/content/js/ext4/examples/shared/icons/fam/table_refresh.png';
+    var SHARE_ICON    = '/content/js/ext4/examples/shared/icons/fam/application_go.png';
     var CALENDAR_ICON = '/content/js/ext/resources/images/default/shared/calendar.gif';
     var CLOCK_ICON    = '/content/img/clock_16.png';
-    var HELP_ICON     = '/content/js/ext/examples/shared/icons/fam/information.png';
+    var HELP_ICON     = '/content/js/ext4/examples/shared/icons/fam/information.png';
 
     {% if initialState %}
     var initialState = {{initialState|safe}};
@@ -43,15 +43,15 @@
     <link rel="stylesheet" type="text/css" href="/content/css/dashboard-{{theme}}.css"/>
 
     {% if jsdebug %}
-    <script type="text/javascript" src="/content/js/ext/adapter/ext/ext-base-debug.js"></script>
-    <script type="text/javascript" src="/content/js/ext/ext-all-debug.js"></script>
-    <script type="text/javascript" src="/content/js/ext/ux/DataViewTransition.js"></script>
+// Make this debug
+    <script type="text/javascript" src="/content/js/ext4/bootstrap.js"></script>
+
     <script type="text/javascript" src="/content/js/composer_widgets.js"></script>
     <script type="text/javascript" src="/content/js/dashboard.js"></script>
     {% else %}
-    <script type="text/javascript" src="/content/js/ext/adapter/ext/ext-base.js"></script>
-    <script type="text/javascript" src="/content/js/ext/ext-all.js"></script>
-    <script type="text/javascript" src="/content/js/ext/ux/DataViewTransition.js"></script>
+
+    <script type="text/javascript" src="/content/js/ext4/bootstrap.js"></script>
+
     <script type="text/javascript" src="/content/js/composer_widgets.js"></script>
     <script type="text/javascript" src="/content/js/dashboard.js"></script>
     {% endif %}
