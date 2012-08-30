@@ -226,7 +226,7 @@ function initDashboard () {
         if (index > -1) {
           var record = combo.store.getAt(index);
           combo.setValue(value);
-          Ext.defer(metricTypeSelected, 250, this, [combo, record, index]);
+          Ext.defer(metricTypeSelected, 250, this, [combo, [record], index]);
         }
       },
       select: metricTypeSelected
