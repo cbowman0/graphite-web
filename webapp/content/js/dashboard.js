@@ -180,9 +180,18 @@ function initDashboard () {
           change: contextFieldChanged,
           select: function (thisField) { thisField.triggerBlur(); focusCompleter(); },
           afterrender: function (thisField) { thisField.hide(); },
-//ext4
-//          hide: function (thisField) { thisField.getEl().up('.x-form-item').setDisplayed(false); },
-//          show: function (thisField) { thisField.getEl().up('.x-form-item').setDisplayed(true); }
+          hide: function (thisField) {
+                  var item = thisField.getEl().up('.x-form-item');
+                  if (item) {
+                    item.setDisplayed(false);
+                  }
+                },
+          show: function (thisField) {
+                  var item = thisField.getEl().up('.x-form-item')
+                  if (item) {
+                    item.setDisplayed(true);
+                  }
+                }
         }
       }) );
 
@@ -203,6 +212,7 @@ function initDashboard () {
     queryMode: 'local',
     triggerAction: 'all',
     editable: false,
+    border: false,
     store: schemesStore,
     displayField: 'name',
     listeners: {
@@ -216,7 +226,7 @@ function initDashboard () {
         if (index > -1) {
           var record = combo.store.getAt(index);
           combo.setValue(value);
-//          Ext.defer(metricTypeSelected, 250, this, [combo, record, index]);
+          Ext.defer(metricTypeSelected, 250, this, [combo, record, index]);
         }
       },
       select: metricTypeSelected
@@ -225,6 +235,7 @@ function initDashboard () {
 
   contextSelector = new Ext.form.FormPanel({
     flex: 1,
+    border: false,
     autoScroll: true,
     fieldDefaults: {
       labelAlign: 'right'
@@ -302,6 +313,7 @@ function initDashboard () {
       ]
     });
 
+
     metricSelectorGrid = new Ext.grid.GridPanel({
       region: 'center',
       hideHeaders: true,
@@ -323,10 +335,9 @@ function initDashboard () {
           return toggledClass + ' ' + branchClass + ' metric-result';
         }
       },
-//ext4
-//      selModel: new Ext.grid.RowSelectionModel({
-//        singleSelect: false
-//      }),
+      selModel: new Ext.selection.RowModel({
+        singleSelect: false
+      }),
       store: new Ext.data.Store({
         autoLoad: true,
         model: 'metrics_find',
@@ -1884,6 +1895,9 @@ function graphClicked(graphView, graphIndex, item, index, evt) {
     activeMenu.destroy();
     activeMenu = null;
     return;
+  } else if (activeMenu != null) {
+    activeMenu.destroy();
+    activeMenu = null;
   }
 
   selectedRecord = record; // global state hack for graph options API
@@ -1982,6 +1996,7 @@ function graphClicked(graphView, graphIndex, item, index, evt) {
   var optionsMenuConfig = createOptionsMenu(); // defined in composer_widgets.js
   optionsMenuConfig.allowOtherMenus = true;
   var optionsMenu = new Ext.menu.Menu(optionsMenuConfig);
+// XXX No idea why this is done like this.  For now commenting out cause the doHide private method no longer exists.
 //  optionsMenu.on('hide', function () { menu.hide(); });
   updateCheckItems();
 
@@ -2055,14 +2070,12 @@ function graphClicked(graphView, graphIndex, item, index, evt) {
     text: 'Apply Function',
     disabled: true,
     width: buttonWidth,
+    menu: functionsMenu,
     handler: function (thisButton) {
-               if (functionsMenu.isVisible()) {
-                 functionsMenu.hide();
-               } else {
                  operationsMenu.hide();
-                 optionsMenu.hide(); // private method... yuck
-                 functionsMenu.show(thisButton.getEl());
-               }
+// XXX This private method no longer exists.
+//                 optionsMenu.doHide(); // private method... yuck
+                 optionsMenu.hide();
              }
   });
 
@@ -2072,14 +2085,10 @@ function graphClicked(graphView, graphIndex, item, index, evt) {
     xtype: 'button',
     text: "Render Options",
     width: buttonWidth,
+    menu: optionsMenu,
     handler: function (thisButton) {
-               if (optionsMenu.isVisible()) {
-                 optionsMenu.hide(); // private method... yuck (no other way to hide w/out trigging hide event handler)
-               } else {
                  operationsMenu.hide();
                  functionsMenu.hide();
-                 optionsMenu.show(thisButton.getEl());
-               }
              }
   });
 
@@ -2087,14 +2096,12 @@ function graphClicked(graphView, graphIndex, item, index, evt) {
     xtype: 'button',
     text: "Graph Operations",
     width: buttonWidth,
+    menu: operationsMenu,
     handler: function (thisButton) {
-               if (operationsMenu.isVisible()) {
-                 operationsMenu.hide();
-               } else {
-                 optionsMenu.hide(); // private method... yuck
+// XXX This private method no longer exists.
+//                 optionsMenu.doHide(); // private method... yuck
+                 optionsMenu.hide();
                  functionsMenu.hide();
-                 operationsMenu.show(thisButton.getEl());
-               }
              }
   });
 
@@ -2104,11 +2111,12 @@ function graphClicked(graphView, graphIndex, item, index, evt) {
     items: buttons
   });
 
-  menu = new Ext.menu.Menu({
+  menu = Ext.create('Ext.menu.Menu', {
     layout: 'anchor',
     allowOtherMenus: true,
     items: menuItems
   });
+
   activeMenu = menu;
   var position = evt.getXY();
   position[0] -= (buttonWidth * 1.5) + 10; //horizontally center menu with the mouse
