@@ -82,17 +82,17 @@ class MultiReader(object):
       # Look for the finer precision value first if available
       i1 = (t - start1) / step1
 
-      if len(values1) > i1:
+      try:
         v1 = values1[i1]
-      else:
+      except IndexError:
         v1 = None
 
       if v1 is None:
         i2 = (t - start2) / step2
 
-        if len(values2) > i2:
+        try:
           v2 = values2[i2]
-        else:
+        except IndexError:
           v2 = None
 
         values.append(v2)
