@@ -1266,6 +1266,7 @@ function timeRangeUpdated() {
 function selectRelativeTime() {
   var quantityField = new Ext.form.TextField({
     fieldLabel: "Show the past",
+    labelAlign: "right",
     labelWidth: 90,
     allowBlank: false,
     regex: /\d+/,
@@ -1289,6 +1290,7 @@ function selectRelativeTime() {
   var untilQuantityField = new Ext.form.TextField({
     id: 'until-quantity-field',
     fieldLabel: "Until",
+    labelAlign: "right",
     labelWidth: 90,
     allowBlank: true,
     regex: /\d+/,
