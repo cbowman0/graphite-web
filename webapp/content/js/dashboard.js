@@ -282,702 +282,702 @@ function initDashboard () {
     metricSelectorMode = 'tree';
 
     metricSelector = new Ext.tree.Panel({
-	      store: treeStore,
-	      containerScroll: true,
-	      autoScroll: true,
-	      forceFit: true,
-	      flex: 3.0,
-	      pathSeparator: '.',
-	      rootVisible: false,
-	      singleExpand: false,
-	      trackMouseOver: true,
-	      listeners: {
-		itemclick: metricTreeSelectorNodeClicked,
-		contextmenu: function (node, e) {
-			       if (!node.leaf) {
-				 folderContextMenu.node = node;
-				 folderContextMenu.showAt( e.getXY() );
-			       }
-			     }
-	      }
-	    });
-	  } else { // NAV_BAR_REGION == 'north'
-	    metricSelectorMode = 'text';
+      store: treeStore,
+      containerScroll: true,
+      autoScroll: true,
+      forceFit: true,
+      flex: 3.0,
+      pathSeparator: '.',
+      rootVisible: false,
+      singleExpand: false,
+      trackMouseOver: true,
+      listeners: {
+	itemclick: metricTreeSelectorNodeClicked,
+	contextmenu: function (node, e) {
+		       if (!node.leaf) {
+			 folderContextMenu.node = node;
+			 folderContextMenu.showAt( e.getXY() );
+		       }
+		     }
+      }
+    });
+  } else { // NAV_BAR_REGION == 'north'
+    metricSelectorMode = 'text';
 
-	    Ext.define('metrics_find', {
-	      extend: 'Ext.data.Model',
-	      fields: [
-		  'path',
-		  'is_leaf'
-	      ]
-	    });
+    Ext.define('metrics_find', {
+      extend: 'Ext.data.Model',
+      fields: [
+	  'path',
+	  'is_leaf'
+      ]
+    });
 
 
-	    metricSelectorGrid = new Ext.grid.GridPanel({
-	      region: 'center',
-	      hideHeaders: true,
-	      loadMask: true,
-	      bodyCls: 'metric-result',
-	      forceFit: true,
-	      columns: [ 
-		  {header: 'Metric Path', sortable: false, menuDisabled: true, width: 1.0, dataIndex: 'path'}
-	      ],
-	      viewConfig: {
-		rowOverCls: '',
-		getRowClass: function(record, index) {
-		  var toggledClass = (
-		     graphStore.findExact('target', 'target=' + record.data.path) == -1
-		    ) ? "metric-not-toggled" : "metric-toggled";
-		  var branchClass = (
-		    record.data['is_leaf'] == '0'
-		  ) ? "result-is-branch-node" : "";
-		  return toggledClass + ' ' + branchClass + ' metric-result';
-		}
-	      },
-	      selModel: new Ext.selection.RowModel({
-		singleSelect: false
-	      }),
-	      store: new Ext.data.Store({
-		autoLoad: true,
-		model: 'metrics_find',
-		fields: ['path', 'is_leaf'],
-		proxy: {
-		  type: 'ajax',
-		  url: '/metrics/find/',
-		  extraParams: {query: '',
-				format: 'completer',
-				automatic_variants: (UI_CONFIG.automatic_variants) ? '1' : '0'
-			       },
-		  reader: {
-			type: 'json',
-			root: 'metrics',
-		  }
-		}
-	      }),
-	      listeners: {
-		itemclick: function (thisGrid, record, item, rowIndex, e) {
-			    if (record.data['is_leaf'] == '1') {
-			      graphAreaToggle(record.data.path);
-	//XXX Why is this refresh here?
-	//                      thisGrid.refresh();
-			    } else {
-			      metricSelectorTextField.setValue(record.data.path);
-			    }
-			    autocompleteTask.delay(50);
-			    focusCompleter();
-			  }
-	      }
-	    });
-
-	    function completerKeyPress(thisField, e) {
-	      var charCode = e.getCharCode();
-	      if (charCode == 8 ||  //backspace
-		  charCode >= 46 || //delete and all printables
-		  charCode == 36 || //home
-		  charCode == 35) { //end
-		autocompleteTask.delay(AUTOCOMPLETE_DELAY);
-	      }
-	    }
-
-	    metricSelectorTextField = new Ext.form.TextField({
-	      region: 'south',
-	      enableKeyEvents: true,
-	      cls: 'completer-input-field',
-	      listeners: {
-		keypress: completerKeyPress,
-		specialkey: completerKeyPress,
-		afterrender: focusCompleter
-	      }
-	    });
-	    metricSelector = new Ext.Panel({
-	      flex: 1.5,
-	      layout: 'border',
-	      items: [metricSelectorGrid, metricSelectorTextField]
-	    });
+    metricSelectorGrid = new Ext.grid.GridPanel({
+      region: 'center',
+      hideHeaders: true,
+      loadMask: true,
+      bodyCls: 'metric-result',
+      forceFit: true,
+      columns: [ 
+	  {header: 'Metric Path', sortable: false, menuDisabled: true, width: 1.0, dataIndex: 'path'}
+      ],
+      viewConfig: {
+	rowOverCls: '',
+	getRowClass: function(record, index) {
+	  var toggledClass = (
+	     graphStore.findExact('target', 'target=' + record.data.path) == -1
+	    ) ? "metric-not-toggled" : "metric-toggled";
+	  var branchClass = (
+	    record.data['is_leaf'] == '0'
+	    ) ? "result-is-branch-node" : "";
+          return toggledClass + ' ' + branchClass + ' metric-result';
+	}
+      },
+      selModel: new Ext.selection.RowModel({
+	singleSelect: false
+      }),
+      store: new Ext.data.Store({
+	autoLoad: true,
+	model: 'metrics_find',
+	fields: ['path', 'is_leaf'],
+	proxy: {
+	  type: 'ajax',
+	  url: '/metrics/find/',
+	  extraParams: {query: '',
+			format: 'completer',
+			automatic_variants: (UI_CONFIG.automatic_variants) ? '1' : '0'
+		       },
+	  reader: {
+		type: 'json',
+		root: 'metrics',
 	  }
+	}
+      }),
+      listeners: {
+	itemclick: function (thisGrid, record, item, rowIndex, e) {
+		    if (record.data['is_leaf'] == '1') {
+		      graphAreaToggle(record.data.path);
+//XXX Why is this refresh here?
+//                      thisGrid.refresh();
+		    } else {
+		      metricSelectorTextField.setValue(record.data.path);
+		    }
+		    autocompleteTask.delay(50);
+		    focusCompleter();
+		  }
+      }
+    });
 
-	  var autocompleteTask = new Ext.util.DelayedTask(function () {
-	    var query = metricSelectorTextField.getValue();
-	    var store = metricSelectorGrid.getStore();
-	    store.proxy.extraParams.query=query;
-	    store.load();
-	  });
+    function completerKeyPress(thisField, e) {
+      var charCode = e.getCharCode();
+      if (charCode == 8 ||  //backspace
+	  charCode >= 46 || //delete and all printables
+	  charCode == 36 || //home
+	  charCode == 35) { //end
+	autocompleteTask.delay(AUTOCOMPLETE_DELAY);
+      }
+    }
 
-	  var graphTemplate;
-	  if (RENDER_ENGINE == 'cairo') {
-	    graphTemplate = new Ext.XTemplate(
-	    '<tpl for=".">',
-	      '<div class="graph-container">',
-		'<div class="graph-overlay">',
-		  '<img class="graph-img" src="{url}" width="{width}" height="{height}">',
-		  '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); updateGraphRecords(); justClosedGraph = true;">X</div>',
-		'</div>',
-	      '</div>',
-	    '</tpl>',
-	    '<div class="x-clear"></div>'
-	  );
+    metricSelectorTextField = new Ext.form.TextField({
+      region: 'south',
+      enableKeyEvents: true,
+      cls: 'completer-input-field',
+      listeners: {
+	keypress: completerKeyPress,
+	specialkey: completerKeyPress,
+	afterrender: focusCompleter
+      }
+    });
+    metricSelector = new Ext.Panel({
+      flex: 1.5,
+      layout: 'border',
+      items: [metricSelectorGrid, metricSelectorTextField]
+    });
+  }
+
+  var autocompleteTask = new Ext.util.DelayedTask(function () {
+    var query = metricSelectorTextField.getValue();
+    var store = metricSelectorGrid.getStore();
+    store.proxy.extraParams.query=query;
+    store.load();
+  });
+
+  var graphTemplate;
+  if (RENDER_ENGINE == 'cairo') {
+    graphTemplate = new Ext.XTemplate(
+    '<tpl for=".">',
+      '<div class="graph-container">',
+	'<div class="graph-overlay">',
+	  '<img class="graph-img" src="{url}" width="{width}" height="{height}">',
+	  '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); updateGraphRecords(); justClosedGraph = true;">X</div>',
+	'</div>',
+      '</div>',
+    '</tpl>',
+    '<div class="x-clear"></div>'
+  );
+  } else {
+    graphTemplate = new Ext.XTemplate(
+  );
+  }
+
+  function setupGraphDD () {
+    graphView.dragZone = new Ext.dd.DragZone(graphView.getEl(), {
+      containerScroll: true,
+      ddGroup: 'graphs',
+
+      getDragData: function (e) {
+	var sourceEl = e.getTarget(graphView.itemSelector, 10);
+	if (sourceEl) {
+	  var dupe = sourceEl.cloneNode(true);
+	  dupe.id = Ext.id();
+	  return {
+	    ddel: dupe,
+	    sourceEl: sourceEl,
+	    repairXY: Ext.fly(sourceEl).getXY(),
+	    sourceStore: graphStore,
+	    draggedRecord: graphView.getRecord(sourceEl)
+	  }
+	}
+      },
+
+      getRepairXY: function () {
+	return this.dragData.repairXY;
+      }
+
+    });
+
+    graphView.dropZone = new Ext.dd.DropZone(graphView.getEl(), {
+      ddGroup: 'graphs',
+      dropAction: 'reorder',
+      mergeEl: Ext.get('merge'),
+
+      getTargetFromEvent: function (e) {
+	return e.getTarget(graphView.itemSelector);
+      },
+
+      onNodeEnter: function (target, dd, e, data) {
+	//Ext.fly(target).addClass('graph-highlight');
+	this.setDropAction('reorder');
+	this.mergeTarget = Ext.get(target);
+	this.mergeSwitchTimeout = Ext.defer(this.setDropAction, UI_CONFIG.merge_hover_delay, this, ['merge']);
+      },
+
+      onNodeOut: function (target, dd, e, data) {
+	//Ext.fly(target).removeClass('graph-highlight');
+	this.mergeEl.hide();
+	//this.setDropAction('reorder');
+      },
+
+      onNodeOver: function (target, dd, e, data) {
+	return Ext.dd.DropZone.prototype.dropAllowed;
+      },
+
+      setDropAction: function (action) {
+	if (this.mergeSwitchTimeout != null) {
+	  clearTimeout(this.mergeSwitchTimeout);
+	  this.mergeSwitchTimeout = null;
+	}
+
+	this.dropAction = action;
+	if (action == 'reorder') {
+	  //revert merge ui change
+	  this.mergeEl.hide();
+	} else if (action == 'merge') {
+	  //apply merge ui change
+	  this.mergeEl.show();
+	  var targetXY = this.mergeTarget.getXY();
+	  var mergeElWidth = Math.max(GraphSize.width * 0.75, 20);
+	  var xOffset = (GraphSize.width - mergeElWidth) / 2;
+	  var yOffset = -14;
+	  this.mergeEl.setXY([targetXY[0] + xOffset, targetXY[1] + yOffset]);
+	  this.mergeEl.setWidth(mergeElWidth);
+	}
+      },
+
+      onNodeDrop: function (target, dd, e, data){
+	var nodes = graphView.getNodes();
+	var dropIndex = nodes.indexOf(target);
+	var dragIndex = graphStore.indexOf(data.draggedRecord);
+
+	if (dragIndex == dropIndex) {
+	  return false;
+	}
+
+	if (this.dropAction == 'reorder') {
+	  graphStore.removeAt(dragIndex);
+	  graphStore.insert(dropIndex, data.draggedRecord);
+	  if ( RENDER_ENGINE == 'cairo' ) {
+	      updateGraphRecords();
 	  } else {
-	    graphTemplate = new Ext.XTemplate(
-	  );
+	      refreshGraphs();
+	  }
+	  return true;
+	} else if (this.dropAction == 'merge') {
+	  var dragRecord = data.draggedRecord;
+	  var dropRecord = graphView.getRecord(target);
+	  if (dropRecord.data.params.target.length == 1) {
+	    if (dropRecord.data.params.target[0] == dropRecord.data.params.title) {
+	      delete dropRecord.data.params.title;
+	    }
 	  }
 
-	  function setupGraphDD () {
-	    graphView.dragZone = new Ext.dd.DragZone(graphView.getEl(), {
-	      containerScroll: true,
-	      ddGroup: 'graphs',
+	  var mergedTargets = uniq( dragRecord.data.params.target.concat(dropRecord.data.params.target) );
+	  dropRecord.data.params.target = mergedTargets;
+	  dropRecord.data.target = Ext.urlEncode({target: mergedTargets});
+	  dropRecord.commit();
+	  graphStore.remove(dragRecord);
+	  if ( RENDER_ENGINE == 'cairo' ) {
+	      updateGraphRecords();
+	  } else {
+	      refreshGraphs();
+	  }
+	  return true;
+	}
+	return false;
+      }
+    });
+  }
 
-	      getDragData: function (e) {
-		var sourceEl = e.getTarget(graphView.itemSelector, 10);
-		if (sourceEl) {
-		  var dupe = sourceEl.cloneNode(true);
-		  dupe.id = Ext.id();
-		  return {
-		    ddel: dupe,
-		    sourceEl: sourceEl,
-		    repairXY: Ext.fly(sourceEl).getXY(),
-		    sourceStore: graphStore,
-		    draggedRecord: graphView.getRecord(sourceEl)
-		  }
-		}
+  graphView = new Ext.DataView({
+    store: graphStore,
+    tpl: graphTemplate,
+    trackOver: true,
+    overItemCls: 'graph-over',
+    itemSelector: 'div.graph-container',
+    deferEmptyText: false,
+    emptyText: "Configure your context above, and then select some metrics.",
+    autoScroll: true,
+//    plugins: [
+//      new Ext.ux.DataViewTransition({
+//        duration: 750,
+//        idProperty: 'target'
+//      })
+//    ],
+    listeners: {
+      itemclick: graphClicked,
+      render: setupGraphDD
+    }
+  });
+
+  /* Toolbar items */
+  var relativeTimeRange = {
+	  icon: CLOCK_ICON,
+	  text: "Relative Time Range",
+	  tooltip: 'View Recent Data',
+	  handler: selectRelativeTime,
+	  scope: this
+  };
+
+  var absoluteTimeRange = {
+    icon: CALENDAR_ICON,
+    text: "Absolute Time Range",
+    tooltip: 'View Specific Time Range',
+    handler: selectAbsoluteTime,
+    scope: this
+  };
+
+  var timeRangeText = {
+    id: 'time-range-text',
+    xtype: 'tbtext',
+    text: getTimeText()
+  };
+
+  var dashboardMenu = {
+    text: 'Dashboard',
+    menu: {
+      items: [
+	{
+	  text: "New",
+	  handler: function (item, e) {
+		     setDashboardName(null);
+		     if (NEW_DASHBOARD_REMOVE_GRAPHS) {
+		       graphStore.removeAll();
+		     }
+		     refreshGraphs();
+		   }
+	}, {
+	  text: "Finder",
+	  handler: showDashboardFinder
+	}, {
+	  text: "Load Template",
+	  handler: showTemplateFinder
+	}, {
+	  text: "Save As Template",
+	  handler: saveTemplate
+	}, {
+	  id: 'dashboard-save-button',
+	  text: "Save",
+	  handler: function (item, e) {
+		     sendSaveRequest(dashboardName);
+		   },
+	  disabled: (dashboardName == null) ? true : false
+	}, {
+	  id: 'show-json-url-button',
+	  text: "Show JSON URL",
+	  handler: showJsonURL,
+	  disabled: (dashboardName == null) ? true : false
+	}, {
+	  text: "Save As",
+	  handler: saveDashboard
+	}, {
+	  text: "Configure UI",
+	  handler: configureUI
+	}
+      ]
+    }
+  };
+
+  var graphsMenu = {
+    text: 'Graphs',
+    menu: {
+      items: [
+	{ text: "New Graph",
+	  menu: {
+	    items: [
+//              { text: "Empty Graph",
+//                handler: newEmptyGraph
+//              },
+	      { text: "From URL",
+		handler: newFromUrl
 	      },
-
-	      getRepairXY: function () {
-		return this.dragData.repairXY;
-	      }
-
-	    });
-
-	    graphView.dropZone = new Ext.dd.DropZone(graphView.getEl(), {
-	      ddGroup: 'graphs',
-	      dropAction: 'reorder',
-	      mergeEl: Ext.get('merge'),
-
-	      getTargetFromEvent: function (e) {
-		return e.getTarget(graphView.itemSelector);
+	      { text: "From Saved Graph",
+		handler: newFromSavedGraph
 	      },
+	    ]
+	  }
+	},
+	{
+	  text: "Edit Default Parameters",
+	  handler: editDefaultGraphParameters
+	}, {
+	  text: "Edit Default Render Engine",
+	  handler: editDefaultRenderEngine
+	}, {
+	  text: "Resize",
+	  handler: selectGraphSize
+	}, {
+	  text: "Remove All",
+	  handler: removeAllGraphs
+	}
+      ]
+    }
+  };
 
-	      onNodeEnter: function (target, dd, e, data) {
-		//Ext.fly(target).addClass('graph-highlight');
-		this.setDropAction('reorder');
-		this.mergeTarget = Ext.get(target);
-		this.mergeSwitchTimeout = Ext.defer(this.setDropAction, UI_CONFIG.merge_hover_delay, this, ['merge']);
-	      },
+  var shareButton = {
+    icon: SHARE_ICON,
+    tooltip: "Share This Dashboard",
+    text: "Share",
+    handler: doShare
+  };
 
-	      onNodeOut: function (target, dd, e, data) {
-		//Ext.fly(target).removeClass('graph-highlight');
-		this.mergeEl.hide();
-		//this.setDropAction('reorder');
-	      },
+  var helpButton = {
+    icon: HELP_ICON,
+    tooltip: "Keyboard Shortcuts",
+    handler: showHelp
+  };
 
-	      onNodeOver: function (target, dd, e, data) {
-		return Ext.dd.DropZone.prototype.dropAllowed;
-	      },
+  var resizeButton = {
+    icon: RESIZE_ICON,
+    tooltip: "Resize Graphs",
+    handler: selectGraphSize
+  };
 
-	      setDropAction: function (action) {
-		if (this.mergeSwitchTimeout != null) {
-		  clearTimeout(this.mergeSwitchTimeout);
-		  this.mergeSwitchTimeout = null;
-		}
+  var removeAllButton = {
+    icon: REMOVE_ICON,
+    tooltip: "Remove All Graphs",
+    handler: removeAllGraphs
+  };
 
-		this.dropAction = action;
-		if (action == 'reorder') {
-		  //revert merge ui change
-		  this.mergeEl.hide();
-		} else if (action == 'merge') {
-		  //apply merge ui change
-		  this.mergeEl.show();
-		  var targetXY = this.mergeTarget.getXY();
-		  var mergeElWidth = Math.max(GraphSize.width * 0.75, 20);
-		  var xOffset = (GraphSize.width - mergeElWidth) / 2;
-		  var yOffset = -14;
-		  this.mergeEl.setXY([targetXY[0] + xOffset, targetXY[1] + yOffset]);
-		  this.mergeEl.setWidth(mergeElWidth);
-		}
-	      },
+  var refreshButton = {
+    icon: REFRESH_ICON,
+    tooltip: 'Refresh Graphs',
+    handler: refreshGraphs
+  };
 
-	      onNodeDrop: function (target, dd, e, data){
-		var nodes = graphView.getNodes();
-		var dropIndex = nodes.indexOf(target);
-		var dragIndex = graphStore.indexOf(data.draggedRecord);
+  var autoRefreshButton = {
+    xtype: 'button',
+    id: 'auto-refresh-button',
+    text: "Auto-Refresh",
+    enableToggle: true,
+    pressed: false,
+    tooltip: "Toggle auto-refresh",
+    toggleHandler: function (button, pressed) {
+		     if (pressed) {
+		       startTask(refreshTask);
+		     } else {
+		       stopTask(refreshTask);
+		     }
+		   }
+  };
 
-		if (dragIndex == dropIndex) {
-		  return false;
-		}
+  var every = {
+    xtype: 'tbtext',
+    text: 'every'
+  };
 
-		if (this.dropAction == 'reorder') {
-		  graphStore.removeAt(dragIndex);
-		  graphStore.insert(dropIndex, data.draggedRecord);
-		  if ( RENDER_ENGINE == 'cairo' ) {
-		      updateGraphRecords();
-		  } else {
-		      refreshGraphs();
-		  }
-		  return true;
-		} else if (this.dropAction == 'merge') {
-		  var dragRecord = data.draggedRecord;
-		  var dropRecord = graphView.getRecord(target);
-		  if (dropRecord.data.params.target.length == 1) {
-		    if (dropRecord.data.params.target[0] == dropRecord.data.params.title) {
-		      delete dropRecord.data.params.title;
+  var seconds = {
+    xtype: 'tbtext',
+    text: 'seconds'
+  };
+
+  var autoRefreshField = {
+    id: 'auto-refresh-field',
+    xtype: 'textfield',
+    width: 25,
+    value: UI_CONFIG.refresh_interval,
+    enableKeyEvents: true,
+    disableKeyFilter: true,
+    listeners: {
+      change: function (field, newValue) { updateAutoRefresh(newValue); },
+      specialkey: function (field, e) {
+		    if (e.getKey() == e.ENTER) {
+		      updateAutoRefresh( field.getValue() );
 		    }
 		  }
+    }
+  };
 
-		  var mergedTargets = uniq( dragRecord.data.params.target.concat(dropRecord.data.params.target) );
-		  dropRecord.data.params.target = mergedTargets;
-		  dropRecord.data.target = Ext.urlEncode({target: mergedTargets});
-		  dropRecord.commit();
-		  graphStore.remove(dragRecord);
-		  if ( RENDER_ENGINE == 'cairo' ) {
-		      updateGraphRecords();
-		  } else {
-		      refreshGraphs();
-		  }
-		  return true;
-		}
-		return false;
-	      }
-	    });
-	  }
+  var lastRefreshed = {
+    xtype: 'tbtext',
+    text: 'Last Refreshed: '
+  };
 
-	  graphView = new Ext.DataView({
-	    store: graphStore,
-	    tpl: graphTemplate,
-	    trackOver: true,
-	    overItemCls: 'graph-over',
-	    itemSelector: 'div.graph-container',
-	    deferEmptyText: false,
-	    emptyText: "Configure your context above, and then select some metrics.",
-	    autoScroll: true,
-	//    plugins: [
-	//      new Ext.ux.DataViewTransition({
-	//        duration: 750,
-	//        idProperty: 'target'
-	//      })
-	//    ],
-	    listeners: {
-	      itemclick: graphClicked,
-	      render: setupGraphDD
-	    }
-	  });
+  var lastRefreshedText = {
+    id: 'last-refreshed-text',
+    xtype: 'tbtext',
+    text: ( Ext.Date.format(new Date(), 'g:i:s A') )
+  };
 
-	  /* Toolbar items */
-	  var relativeTimeRange = {
-		  icon: CLOCK_ICON,
-		  text: "Relative Time Range",
-		  tooltip: 'View Recent Data',
-		  handler: selectRelativeTime,
-		  scope: this
-	  };
+  graphArea = new Ext.Panel({
+    region: 'center',
+    layout: 'fit',
+    autoScroll: false,
+    bodyCls: 'graph-area-body',
+    items: [graphView],
+    tbar: new Ext.Toolbar({
+      items: [
+	dashboardMenu,
+	graphsMenu,
+	'-',
+	shareButton,
+	'-',
+	relativeTimeRange,
+	absoluteTimeRange,
+	' ',
+	timeRangeText,
+	'->',
+	helpButton,
+	resizeButton,
+	removeAllButton,
+	refreshButton,
+	autoRefreshButton,
+	every, autoRefreshField, seconds,
+	'-',
+	lastRefreshed, lastRefreshedText
+      ]
+    })
+  });
 
-	  var absoluteTimeRange = {
-	    icon: CALENDAR_ICON,
-	    text: "Absolute Time Range",
-	    tooltip: 'View Specific Time Range',
-	    handler: selectAbsoluteTime,
-	    scope: this
-	  };
+  /* Nav Bar */
+  navBarNorthConfig.items = [metricSelector];
+  navBarWestConfig.items = [contextSelector, metricSelector];
+  var navBarConfig = (NAV_BAR_REGION == 'north') ? navBarNorthConfig : navBarWestConfig;
+  navBar = new Ext.Panel(navBarConfig);
 
-	  var timeRangeText = {
-	    id: 'time-range-text',
-	    xtype: 'tbtext',
-	    text: getTimeText()
-	  };
-
-	  var dashboardMenu = {
-	    text: 'Dashboard',
-	    menu: {
-	      items: [
-		{
-		  text: "New",
-		  handler: function (item, e) {
-			     setDashboardName(null);
-			     if (NEW_DASHBOARD_REMOVE_GRAPHS) {
-			       graphStore.removeAll();
-			     }
-			     refreshGraphs();
-			   }
-		}, {
-		  text: "Finder",
-		  handler: showDashboardFinder
-		}, {
-		  text: "Load Template",
-		  handler: showTemplateFinder
-		}, {
-		  text: "Save As Template",
-		  handler: saveTemplate
-		}, {
-		  id: 'dashboard-save-button',
-		  text: "Save",
-		  handler: function (item, e) {
-			     sendSaveRequest(dashboardName);
-			   },
-		  disabled: (dashboardName == null) ? true : false
-		}, {
-		  id: 'show-json-url-button',
-		  text: "Show JSON URL",
-		  handler: showJsonURL,
-		  disabled: (dashboardName == null) ? true : false
-		}, {
-		  text: "Save As",
-		  handler: saveDashboard
-		}, {
-		  text: "Configure UI",
-		  handler: configureUI
-		}
-	      ]
-	    }
-	  };
-
-	  var graphsMenu = {
-	    text: 'Graphs',
-	    menu: {
-	      items: [
-		{ text: "New Graph",
-		  menu: {
-		    items: [
-	//              { text: "Empty Graph",
-	//                handler: newEmptyGraph
-	//              },
-		      { text: "From URL",
-			handler: newFromUrl
-		      },
-		      { text: "From Saved Graph",
-			handler: newFromSavedGraph
-		      },
-		    ]
-		  }
-		},
-		{
-		  text: "Edit Default Parameters",
-		  handler: editDefaultGraphParameters
-		}, {
-		  text: "Edit Default Render Engine",
-		  handler: editDefaultRenderEngine
-		}, {
-		  text: "Resize",
-		  handler: selectGraphSize
-		}, {
-		  text: "Remove All",
-		  handler: removeAllGraphs
-		}
-	      ]
-	    }
-	  };
-
-	  var shareButton = {
-	    icon: SHARE_ICON,
-	    tooltip: "Share This Dashboard",
-	    text: "Share",
-	    handler: doShare
-	  };
-
-	  var helpButton = {
-	    icon: HELP_ICON,
-	    tooltip: "Keyboard Shortcuts",
-	    handler: showHelp
-	  };
-
-	  var resizeButton = {
-	    icon: RESIZE_ICON,
-	    tooltip: "Resize Graphs",
-	    handler: selectGraphSize
-	  };
-
-	  var removeAllButton = {
-	    icon: REMOVE_ICON,
-	    tooltip: "Remove All Graphs",
-	    handler: removeAllGraphs
-	  };
-
-	  var refreshButton = {
-	    icon: REFRESH_ICON,
-	    tooltip: 'Refresh Graphs',
-	    handler: refreshGraphs
-	  };
-
-	  var autoRefreshButton = {
-	    xtype: 'button',
-	    id: 'auto-refresh-button',
-	    text: "Auto-Refresh",
-	    enableToggle: true,
-	    pressed: false,
-	    tooltip: "Toggle auto-refresh",
-	    toggleHandler: function (button, pressed) {
-			     if (pressed) {
-			       startTask(refreshTask);
-			     } else {
-			       stopTask(refreshTask);
-			     }
-			   }
-	  };
-
-	  var every = {
-	    xtype: 'tbtext',
-	    text: 'every'
-	  };
-
-	  var seconds = {
-	    xtype: 'tbtext',
-	    text: 'seconds'
-	  };
-
-	  var autoRefreshField = {
-	    id: 'auto-refresh-field',
-	    xtype: 'textfield',
-	    width: 25,
-	    value: UI_CONFIG.refresh_interval,
-	    enableKeyEvents: true,
-	    disableKeyFilter: true,
-	    listeners: {
-	      change: function (field, newValue) { updateAutoRefresh(newValue); },
-	      specialkey: function (field, e) {
-			    if (e.getKey() == e.ENTER) {
-			      updateAutoRefresh( field.getValue() );
-			    }
-			  }
-	    }
-	  };
-
-	  var lastRefreshed = {
-	    xtype: 'tbtext',
-	    text: 'Last Refreshed: '
-	  };
-
-	  var lastRefreshedText = {
-	    id: 'last-refreshed-text',
-	    xtype: 'tbtext',
-	    text: ( Ext.Date.format(new Date(), 'g:i:s A') )
-	  };
-
-	  graphArea = new Ext.Panel({
-	    region: 'center',
-	    layout: 'fit',
-	    autoScroll: false,
-	    bodyCls: 'graph-area-body',
-	    items: [graphView],
-	    tbar: new Ext.Toolbar({
-	      items: [
-		dashboardMenu,
-		graphsMenu,
-		'-',
-		shareButton,
-		'-',
-		relativeTimeRange,
-		absoluteTimeRange,
-		' ',
-		timeRangeText,
-		'->',
-		helpButton,
-		resizeButton,
-		removeAllButton,
-		refreshButton,
-		autoRefreshButton,
-		every, autoRefreshField, seconds,
-		'-',
-		lastRefreshed, lastRefreshedText
-	      ]
-	    })
-	  });
-
-	  /* Nav Bar */
-	  navBarNorthConfig.items = [metricSelector];
-	  navBarWestConfig.items = [contextSelector, metricSelector];
-	  var navBarConfig = (NAV_BAR_REGION == 'north') ? navBarNorthConfig : navBarWestConfig;
-	  navBar = new Ext.Panel(navBarConfig);
-
-	  viewport = new Ext.Viewport({
-	    layout: 'border',
-	    items: [
-	      navBar,
-	      graphArea
-	    ]
-	  });
+  viewport = new Ext.Viewport({
+    layout: 'border',
+    items: [
+      navBar,
+      graphArea
+    ]
+  });
 
 
-	  // Keymappings
-	  var specialKeys = {
-	    space: 32,
-	    enter: Ext.EventObject.ENTER,
-	    backspace: Ext.EventObject.BACKSPACE
-	  };
+  // Keymappings
+  var specialKeys = {
+    space: 32,
+    enter: Ext.EventObject.ENTER,
+    backspace: Ext.EventObject.BACKSPACE
+  };
 
-	  var keyMapConfigs = [{
-		  key: "t",
-		  ctrl:true,
-		  shift:true,
-		  fn: function(){ alert('Control + shift + tab was pressed.'); }
-	      }];
-	  
-	  for (var event_name in UI_CONFIG.keyboard_shortcuts) {
-	    var config = {handler: keyEventHandlers[event_name]};
-	    if (!config.handler) {
-	      continue;
-	    }
-	    var keyString = UI_CONFIG.keyboard_shortcuts[event_name];
-	    var keys = keyString.split('-');
-	    config.ctrl = keys.indexOf('ctrl') > -1;
-	    config.alt = keys.indexOf('alt') > -1;
-	    config.shift = keys.indexOf('shift') > -1;
-	    config.key = keys[keys.length - 1];
-	    if (specialKeys[config.key]) {
-	      config.key = specialKeys[config.key];
-	    }
-	    keyMapConfigs.push(config);
-	  }
-	  
-	  var keyMap = new Ext.util.KeyMap({
-	      target: viewport,
-	      binding: keyMapConfigs
-	  });
+  var keyMapConfigs = [{
+	  key: "t",
+	  ctrl:true,
+	  shift:true,
+	  fn: function(){ alert('Control + shift + tab was pressed.'); }
+      }];
+  
+  for (var event_name in UI_CONFIG.keyboard_shortcuts) {
+    var config = {handler: keyEventHandlers[event_name]};
+    if (!config.handler) {
+      continue;
+    }
+    var keyString = UI_CONFIG.keyboard_shortcuts[event_name];
+    var keys = keyString.split('-');
+    config.ctrl = keys.indexOf('ctrl') > -1;
+    config.alt = keys.indexOf('alt') > -1;
+    config.shift = keys.indexOf('shift') > -1;
+    config.key = keys[keys.length - 1];
+    if (specialKeys[config.key]) {
+      config.key = specialKeys[config.key];
+    }
+    keyMapConfigs.push(config);
+  }
+  
+  var keyMap = new Ext.util.KeyMap({
+      target: viewport,
+      binding: keyMapConfigs
+  });
 
-	  refreshTask = {
-	    run: refreshGraphs,
-	    interval: UI_CONFIG.refresh_interval * 1000
-	  };
+  refreshTask = {
+    run: refreshGraphs,
+    interval: UI_CONFIG.refresh_interval * 1000
+  };
 
-	  // Load initial dashboard state if it was passed in
-	  if (initialState) {
-	    applyState(initialState);
-	    navBar.collapse(false);
-	  }
+  // Load initial dashboard state if it was passed in
+  if (initialState) {
+    applyState(initialState);
+    navBar.collapse(false);
+  }
 
-	  if(window.location.hash != '')
-	  {
-	    sendLoadRequest(window.location.hash.substr(1));
-	    navBar.collapse(false);
-	  }
+  if(window.location.hash != '')
+  {
+    sendLoadRequest(window.location.hash.substr(1));
+    navBar.collapse(false);
+  }
 
-	  if (initialError) {
-	    Ext.Msg.alert("Error", initialError);
-	  }
-	}
+  if (initialError) {
+    Ext.Msg.alert("Error", initialError);
+  }
+}
 
-	function showHelp() {
-	  var win = new Ext.Window({
-	    title: "Keyboard Shortcuts",
-	    modal: true,
-	    width: 550,
-	    height: 300,
-	    autoLoad: "/dashboard/help/"
-	  });
-	  win.show();
-	}
+function showHelp() {
+  var win = new Ext.Window({
+    title: "Keyboard Shortcuts",
+    modal: true,
+    width: 550,
+    height: 300,
+    autoLoad: "/dashboard/help/"
+  });
+  win.show();
+}
 
-	function metricTypeSelected (combo, record, e) {
-	  selectedScheme = record[0];
+function metricTypeSelected (combo, record, e) {
+  selectedScheme = record[0];
 
-	  // Show only the fields for the selected context
-	  Ext.each(contextSelectorFields, function (field) {
-	    if (field.getId().indexOf( selectedScheme.get('name') ) == 0) {
-	      field.show();
-	    } else {
-	      field.hide();
-	    }
-	  });
+  // Show only the fields for the selected context
+  Ext.each(contextSelectorFields, function (field) {
+    if (field.getId().indexOf( selectedScheme.get('name') ) == 0) {
+      field.show();
+    } else {
+      field.hide();
+    }
+  });
 
-	  setContextFieldCookie("metric-type", combo.getValue());
-	  contextFieldChanged();
-	  focusCompleter();
-	}
-
-
-	function buildQuery (queryEvent) {
-	  var queryString = "";
-	  var parts = selectedScheme.get('pattern').split('.');
-	  var schemeName = selectedScheme.get('name');
-
-	  // Clear cached records to force JSON queries every time
-	  contextFieldStore.removeAll();
-	  delete queryEvent.combo.lastQuery;
-
-	  for (var i = 0; i < parts.length; i++) {
-	    var part = parts[i];
-	    var field = part.match(/^<[^>]+>$/) ? part.substr(1, part.length - 2) : null;
-
-	    if (field == null) {
-	      queryString += part + '.';
-	      continue;
-	    }
-
-	    var combo = Ext.getCmp(schemeName + '-' + field);
-	    var value = combo.getValue();
-
-	    if (UI_CONFIG.automatic_variants) {
-	      if (value.indexOf(',') > -1 && value.search(/[{}]/) == -1) {
-		value = '{' + value + '}';
-	      }
-	    }
-
-	    if (combo === queryEvent.combo) {
-	      queryEvent.query = queryString + queryEvent.query + '*';
-	      return;
-	    } else {
-	      if (value) {
-		queryString += value + '.';
-	      } else {
-		Ext.Msg.alert('Missing Context', 'Please fill out all of the fields above first.');
-		queryEvent.cancel = true;
-		return;
-	      }
-	    }
-	  }
-
-	  Ext.Msg.alert('Error', 'Failed to build query, could not find "' + queryEvent.combo.getId() + '" field');
-	  queryEvent.cancel = true;
-	}
+  setContextFieldCookie("metric-type", combo.getValue());
+  contextFieldChanged();
+  focusCompleter();
+}
 
 
-	function contextFieldChanged() {
-	  var pattern = getContextFieldsPattern();
-	  if (pattern) metricSelectorShow(pattern);
-	}
+function buildQuery (queryEvent) {
+  var queryString = "";
+  var parts = selectedScheme.get('pattern').split('.');
+  var schemeName = selectedScheme.get('name');
 
-	function getContextFieldsPattern() {
-	  var schemeName = selectedScheme.get('name');
-	  var pattern = selectedScheme.get('pattern');
-	  var fields = selectedScheme.get('fields');
-	  var missing_fields = false;
+  // Clear cached records to force JSON queries every time
+  contextFieldStore.removeAll();
+  delete queryEvent.combo.lastQuery;
 
-	  Ext.each(fields, function (field) {
-	    var id = schemeName + '-' + field.name;
-	    var value = Ext.getCmp(id).getValue() || '';
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i];
+    var field = part.match(/^<[^>]+>$/) ? part.substr(1, part.length - 2) : null;
 
-	    // Update context field cookies
-	    setContextFieldCookie(field.name, value);
+    if (field == null) {
+      queryString += part + '.';
+      continue;
+    }
 
-	    if (UI_CONFIG.automatic_variants) {
-	      if (value.indexOf(',') > -1 && value.search(/[{}]/) == -1) {
-		value = '{' + value + '}';
-	      }
-	    }
+    var combo = Ext.getCmp(schemeName + '-' + field);
+    var value = combo.getValue();
 
-	    if (value.trim() == "") {
-	      missing_fields = true;
-	    } else {
-	      pattern = pattern.replace('<' + field.name + '>', value);
-	    }
-	  });
+    if (UI_CONFIG.automatic_variants) {
+      if (value.indexOf(',') > -1 && value.search(/[{}]/) == -1) {
+	value = '{' + value + '}';
+      }
+    }
 
-	  if (missing_fields) {
-	    return;
-	  }
+    if (combo === queryEvent.combo) {
+      queryEvent.query = queryString + queryEvent.query + '*';
+      return;
+    } else {
+      if (value) {
+	queryString += value + '.';
+      } else {
+	Ext.Msg.alert('Missing Context', 'Please fill out all of the fields above first.');
+	queryEvent.cancel = true;
+	return;
+      }
+    }
+  }
 
-	  return pattern;
-	}
+  Ext.Msg.alert('Error', 'Failed to build query, could not find "' + queryEvent.combo.getId() + '" field');
+  queryEvent.cancel = true;
+}
 
-	function metricSelectorShow(pattern) {
-	  if (metricSelectorMode == 'tree') {
-	    metricTreeSelectorShow(pattern);
-	  } else {
-	    metricTextSelectorShow(pattern);
-	  }
-	}
 
-	function metricTreeSelectorShow(pattern) {
-	  var base_parts = pattern.split('.');
+function contextFieldChanged() {
+  var pattern = getContextFieldsPattern();
+  if (pattern) metricSelectorShow(pattern);
+}
 
-	  function setParams (loader, node, callback) {
-	    treeStore.proxy.extraParams.query = pattern + '.*';
+function getContextFieldsPattern() {
+  var schemeName = selectedScheme.get('name');
+  var pattern = selectedScheme.get('pattern');
+  var fields = selectedScheme.get('fields');
+  var missing_fields = false;
+
+  Ext.each(fields, function (field) {
+    var id = schemeName + '-' + field.name;
+    var value = Ext.getCmp(id).getValue() || '';
+
+    // Update context field cookies
+    setContextFieldCookie(field.name, value);
+
+    if (UI_CONFIG.automatic_variants) {
+      if (value.indexOf(',') > -1 && value.search(/[{}]/) == -1) {
+	value = '{' + value + '}';
+      }
+    }
+
+    if (value.trim() == "") {
+      missing_fields = true;
+    } else {
+      pattern = pattern.replace('<' + field.name + '>', value);
+    }
+  });
+
+  if (missing_fields) {
+    return;
+  }
+
+  return pattern;
+}
+
+function metricSelectorShow(pattern) {
+  if (metricSelectorMode == 'tree') {
+    metricTreeSelectorShow(pattern);
+  } else {
+    metricTextSelectorShow(pattern);
+  }
+}
+
+function metricTreeSelectorShow(pattern) {
+  var base_parts = pattern.split('.');
+
+  function setParams (loader, node, callback) {
+    treeStore.proxy.extraParams.query = pattern + '.*';
 
     if (node.id == 'root') {
       treeStore.proxy.extraParams.query = pattern + '.*';
