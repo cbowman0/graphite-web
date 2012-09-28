@@ -25,7 +25,6 @@
 */
 
 
-
 var DEFAULT_WINDOW_WIDTH = 600;
 var DEFAULT_WINDOW_HEIGHT = 400;
 var Composer;
@@ -36,7 +35,10 @@ function createComposerWindow(myComposer) {
   Composer = myComposer;
 
   //Can't define this inline because I need a reference in a closure below
-  var timeDisplay = new Ext.Toolbar.TextItem({text: "Now showing the past 24 hours"});
+//ext4
+  var timeDisplay = Ext.create('Ext.Toolbar.TextItem', {
+                        text: "Now showing the past 24 hours"
+  });
 
   var topToolbar = [
     createToolbarButton('Update Graph', 'updateGraph.gif', updateGraph),
@@ -68,8 +70,7 @@ function createComposerWindow(myComposer) {
     maximizable: true,
     closable: false,
     tbar: topToolbar,
-    buttons: bottomToolbar,
-    buttonAlign: 'left',
+    fbar: { layout:{pack:'left'}, items:bottomToolbar },
     items: { html: "<img id='image-viewer' src='/render'/>", region: "center" },
     listeners: {
       activate: keepDataWindowOnTop,
@@ -133,8 +134,10 @@ function keepDataWindowOnTop () {
 }
 
 function fitImageToWindow(win) {
-  Composer.url.setParam('width', win.getInnerWidth());
-  Composer.url.setParam('height', win.getInnerHeight());
+//  Composer.url.setParam('width', win.getInnerWidth());
+//  Composer.url.setParam('height', win.getInnerHeight());
+  Composer.url.setParam('width', win.getWidth());
+  Composer.url.setParam('height', win.getHeight());
   try {
     Composer.updateImage();
   } catch (err) {
@@ -145,7 +148,7 @@ function fitImageToWindow(win) {
 
 /* Toolbar stuff */
 function createToolbarButton(tip, icon, handler) {
-  return new Ext.Toolbar.Button({
+  var button = Ext.create('Ext.button.Button', {
     style: "padding-left:10pt; background:transparent url(../content/img/" + icon + ") no-repeat scroll 0% 50%",
     handler: handler,
     handleMouseEvents: false,
@@ -161,6 +164,7 @@ function createToolbarButton(tip, icon, handler) {
       }
     }
   });
+  return button;
 }
 
 /* "Date Range" Calendar */
@@ -885,10 +889,11 @@ var GraphDataWindow = {
 };
 
 /* Yet another ghetto api hack */
+/*
 var applyFuncToAll = Ext.bind(GraphDataWindow.applyFuncToAll, GraphDataWindow);
 var applyFuncToEach = Ext.bind(GraphDataWindow.applyFuncToEach, GraphDataWindow);
 var applyFuncToEachWithInput = Ext.bind(GraphDataWindow.applyFuncToEachWithInput, GraphDataWindow);
-
+*/
 
 function createFunctionsMenu() {
   return [{

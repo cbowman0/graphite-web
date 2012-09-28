@@ -1,6 +1,29 @@
-var MetricCompleter;
+Ext.define('metrics_find', {
+  extend: 'Ext.data.Model',
+  fields: [
+      'path',
+      'is_leaf'
+  ]
+});
 
-MetricCompleter = {
+var store = new Ext.data.Store({
+  autoLoad: true,
+  model: 'metrics_find',
+  fields: ['path', 'is_leaf'],
+  proxy: {
+    type: 'ajax',
+    url: '/metrics/find/',
+    extraParams: {query: '',
+                  format: 'completer'
+                 },
+    reader: {
+          type: 'json',
+          root: 'metrics',
+    }
+  }
+});
+
+Ext.define('MetricCompleter', {
   extend: "Ext.form.ComboBox",
   displayField: "path",
   listEmptyText: "No matching metrics",
@@ -10,50 +33,27 @@ MetricCompleter = {
   queryParam: 'query',
   typeAhead: false,
   minChars: 1,
-
-  initComponent: function () {
-    var _this = this;
-
-    var store = new Ext.data.JsonStore({
-      url: "../metrics/find/",
-      root: 'metrics',
-      fields: ['path', 'name'],
-      baseParams: {format: 'completer'}
-    });
-
-    var config = {store: store};
-
-    Ext.apply(this, config);
-    Ext.apply(this.initialConfig, config);
-
-    MetricCompleter.superclass.initComponent.call(this);
-
-    this.addListener('beforequery', this.prepareQuery.createDelegate(this));
-    this.addListener('specialkey', this.onSpecialKey.createDelegate(this));
-    this.addListener('afterrender',
-      function () {
-        _this.getEl().addListener('specialkey',
-          function (el, e) {
-            _this.onSpecialKey(_this.getEl(), e);
-          }
-        );
-      }
-    );
-  },
-
-  prepareQuery: function (queryEvent) {
-    queryEvent.query += '*';
-  },
-
-  onSpecialKey: function (field, e) {
+  store: store,
+  listeners: {
+   beforequery: function (e) {
+                  this.store.proxy.extraParams.query = '*';
+                }, 
+   specialkey: function (queryEvent) {
     if (e.getKey() == e.TAB) { // This was a pain in the ass to actually get it working right
       field.getEl().blur();
       field.getEl().focus(50);
       field.doQuery( field.getValue() );
       e.stopEvent();
       return false;
+               }
+    },
+   afterrender: function () {
+        this.getEl().addListener('specialkey',
+          function (el, e) {
+            _this.onSpecialKey(_this.getEl(), e);
+          }
+        );
+      }
     }
-  }
-};
+});
 
-Ext.reg('metriccompleter', MetricCompleter);

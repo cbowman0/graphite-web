@@ -141,6 +141,34 @@ def renderView(request):
       response['Cache-Control'] = 'no-cache'
       return response
 
+    if format == 'chart':
+      series_data = {}
+      fields = []
+# Convert from series of datapoints to:
+# timestamp  series1 serires2...
+# timestamp2 series1 series2
+      fields.append(dict(name='tstamp', type='date', dateFormat='timestamp'))
+      for series in data:
+#        fields.append(dict (name=series.name, type='float') )
+        fields.append(dict (name='data1', type='float') )
+        timestamps = range(series.start, series.end, series.step)
+        datapoints = zip(timestamps, series)
+        for (tstamp, val) in datapoints:
+          series_data.setdefault(tstamp,{})
+          series_data[tstamp]['data1'] = val
+
+      output_data = []
+      for tstamp in sorted(series_data.keys()):
+        row=series_data[tstamp]
+        row['tstamp']=tstamp
+        output_data.append(row)
+      metadata = dict(fields=fields, root='target')
+      response = HttpResponse(content=json.dumps(dict(success=True, total=len(output_data), metaData=metadata, target=output_data), sort_keys=True), mimetype='application/json')
+#      response = HttpResponse(content=json.dumps(dict(target=output_data)), mimetype='application/json')
+      response['Pragma'] = 'no-cache'
+      response['Cache-Control'] = 'no-cache'
+      return response
+
     if format == 'raw':
       response = HttpResponse(mimetype='text/plain')
       for series in data:

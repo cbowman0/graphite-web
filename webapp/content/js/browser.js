@@ -37,29 +37,41 @@ function GraphiteBrowser () {
 
 //Tree Tab
 function createTreePanel(){
-  var rootNode = new Ext.tree.TreeNode({});
+  Ext.define('metrics_find', {
+    extend: 'Ext.data.Model',
+    fields: [
+        'path',
+        'is_leaf'
+    ]
+  });
+
+  var treeStore = new Ext.data.TreeStore({
+    autoLoad: true,
+    model: 'metrics_find',
+    fields: ['path', 'is_leaf'],
+    proxy: {
+      type: 'ajax',
+      url: '/metrics/find/',
+      extraParams: {format: 'treejson', query: ''},
+      reader: {
+            type: 'json',
+            root: 'metrics',
+            idProperty: 'name'
+      }
+    }
+  });
 
   function setParams(loader, node) {
     var node_id = node.id.replace(/^[A-Za-z]+Tree\.?/,"");
-    loader.baseParams.query = (node_id == "") ? "*" : (node_id + ".*");
-    loader.baseParams.format = 'treejson';
-    loader.baseParams.path = node_id;
+    treeStore.proxy.extraParams.query = (node_id == "") ? "*" : (node_id + ".*");
+    treeStore.proxy.extraParams.path = node_id;
 
     if (node.parentNode && node.parentNode.id == "UserGraphsTree") {
-      loader.baseParams.user = node.id;
+      treeStore.proxy.extraParams.user = node.id;
     }
   }
 
-  var graphiteNode = new Ext.tree.AsyncTreeNode({
-    id: 'GraphiteTree',
-    text: "Graphite",
-    loader: new Ext.tree.TreeLoader({
-      url: "../metrics/find/",
-      requestMethod: "GET",
-      listeners: {beforeload: setParams}
-    })
-  });
-  rootNode.appendChild(graphiteNode);
+  treeStore.on('beforeload', setParams);
 
   //function reloadOnce (node) {
   //  node.un('beforeexpand', reloadOnce);
@@ -68,38 +80,26 @@ function createTreePanel(){
   //}
 
   if (GraphiteConfig.showMyGraphs) {
-    var myGraphsNode = new Ext.tree.AsyncTreeNode({
-      id: 'MyGraphsTree',
-      text: "My Graphs",
-      leaf: false,
-      allowChildren: true,
-      expandable: true,
-      allowDrag: false,
-      //listeners: {beforeexpand: reloadOnce},
-      loader: new Ext.tree.TreeLoader({
-        url: "../browser/mygraph/",
-        requestMethod: "GET",
-        listeners: {beforeload: setParams}
-      })
+    var myGraphsStore = new Ext.data.TreeStore({
+      proxy: {
+        type: 'ajax',
+        url: '/browser/mygraph/',
+        extraParams: {format: 'treejson', query: ''},
+        reader: {
+              type: 'json',
+              root: 'metrics',
+              idProperty: 'name'
+        }
+      }
     });
+
+//XXX 
     rootNode.appendChild(myGraphsNode);
   }
 
-  var userGraphsNode = new Ext.tree.AsyncTreeNode({
-    id: 'UserGraphsTree',
-    text: "User Graphs",
-    //listeners: {beforeexpand: reloadOnce},
-    loader: new Ext.tree.TreeLoader({
-      url: "../browser/usergraph/",
-      requestMethod: "GET",
-      listeners: {beforeload: setParams}
-    })
-  });
-  rootNode.appendChild(userGraphsNode);
-
   var treePanel = new Ext.tree.TreePanel({
     title: "Tree",
-    root: rootNode,
+    store: treeStore,
     containerScroll: true,
     autoScroll: true,
     pathSeparator: ".",
@@ -153,7 +153,7 @@ function createSearchPanel() {
 
 function setupSearchForm(formEl) {
   var html = '<a id="searchHelpLink" > Help </a> <p id="searchError"></p> <ul id="searchResults"></ul>';
-  Ext.DomHelper.append("searchForm", html);
+  Ext.core.DomHelper.append("searchForm", html);
   var helpAction = 'javascript: void window.open';
   var helpPage = '"../content/html/searchHelp.html"';
   var helpTitle = '"Searching Graphite"';

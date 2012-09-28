@@ -17,22 +17,30 @@ limitations under the License. -->
 <html>
   <head>
     <title>Graphite Composer</title>
-    <link rel="stylesheet" type="text/css" href="/content/js/ext/resources/css/ext-all.css"/>
+    <link rel="stylesheet" type="text/css" href="/content/js/ext4/resources/css/ext-all.css"/>
 
     {% if jsdebug %}
-    <script type="text/javascript" src="/content/js/ext/adapter/ext/ext-base-debug.js"></script>
-    <script type="text/javascript" src="/content/js/ext/ext-all-debug.js"></script>
+    <script type="text/javascript" src="/content/js/ext4/bootstrap.js"></script>
     {% else %}
-    <script type="text/javascript" src="/content/js/ext/adapter/ext/ext-base.js"></script>
-    <script type="text/javascript" src="/content/js/ext/ext-all.js"></script>
+    <script type="text/javascript" src="/content/js/ext4/ext-all-debug.js"></script>
+    <script type="text/javascript" src="/content/js/ext4/compatibility/ext3-core-compat.js"></script>
+    <script type="text/javascript" src="/content/js/ext4/compatibility/ext3-compat.js"></script>
+<!--    <script type="text/javascript" src="/content/js/ext4/bootstrap.js"></script> -->
     {% endif %}
 
     <script type="text/javascript">
       /* A global cache of current metadata about metrics the user selects */
-      var TargetRecord = new Ext.data.Record.create(['value']);
 
-      var TargetStore = new Ext.data.ArrayStore({
-        fields: TargetRecord.fields
+Ext.Compat.showErrors = true;
+
+
+      Ext.define('TargetRecord', {
+        extend: 'Ext.data.Model',
+        fields: ['value']
+      });
+
+      var TargetStore = new Ext.data.Store({
+        model: 'TargetRecord'
       });
 
       function getTargetRecord(target) {
