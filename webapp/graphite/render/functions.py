@@ -1988,8 +1988,8 @@ def constantLine(requestContext, value):
   """
   start = timestamp( requestContext['startTime'] )
   end = timestamp( requestContext['endTime'] )
-  step = (end - start) / 2.0
-  series = TimeSeries(str(value), start, end, step, [value, value, value])
+  step = (end - start) / 1.0
+  series = TimeSeries(str(value), start, end, step, [value, value])
   return [series]
 
 
