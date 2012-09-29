@@ -1311,7 +1311,7 @@ var GraphSize = {
 function newEmptyGraph() {
 
   var myParams = {
-    target: [""]
+    target: []
   };
 
   var graphTargetString = Ext.urlEncode({target: ""});
