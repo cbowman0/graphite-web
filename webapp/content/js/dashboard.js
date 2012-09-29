@@ -2560,12 +2560,14 @@ function applyState(state) {
   setDashboardName(state.name);
 
   //state.timeConfig = {type, quantity, units, untilQuantity, untilUnits, startDate, startTime, endDate, endTime}
+  // OR
+  //state.timeConfig = {type, relativeStartQuantity, relativeStartUnits, relativeUntilQuantity, relativeUntilUnits, startDate, startTime, endDate, endTime}
   var timeConfig = state.timeConfig
   TimeRange.type = timeConfig.type;
-  TimeRange.relativeStartQuantity = timeConfig.relativeStartQuantity;
-  TimeRange.relativeStartUnits = timeConfig.relativeStartUnits;
-  TimeRange.relativeUntilQuantity = timeConfig.relativeUntilQuantity;
-  TimeRange.relativeUntilUnits = timeConfig.relativeUntilUnits;
+  TimeRange.relativeStartQuantity = timeConfig.relativeStartQuantity || timeConfig.quantity;
+  TimeRange.relativeStartUnits = timeConfig.relativeStartUnits || timeconfig.units;
+  TimeRange.relativeUntilQuantity = timeConfig.relativeUntilQuantity || "";
+  TimeRange.relativeUntilUnits = timeConfig.relativeUntilUnits || "";
   TimeRange.startDate = new Date(timeConfig.startDate);
   TimeRange.startTime = timeConfig.startTime;
   TimeRange.endDate = new Date(timeConfig.endDate);
