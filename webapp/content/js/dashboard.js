@@ -1821,32 +1821,57 @@ function graphClicked(graphView, graphIndex, element, evt) {
         selectedRecord.data.params.target = targets;
         selectedRecord.data.target = Ext.urlEncode({target: targets});
         refreshGraphs();
+      },
+      remove: function (thisStore, record, operation) {
+        var targets = [];
+        thisStore.each(function (rec) { targets.push(rec.data.target); });
+        selectedRecord.data.params.target = targets;
+        selectedRecord.data.target = Ext.urlEncode({target: targets});
+        refreshGraphs();
       }
     }
   });
 
-  var buttonWidth = 150;
+  var buttonWidth = 115;
   var rowHeight = 21;
   var maxRows = 6;
   var frameHeight = 5;
-  var gridWidth = (buttonWidth * 3) + 2;
+  var gridWidth = (buttonWidth * 3) + (buttonWidth / 2) + 2;
   var gridHeight = (rowHeight * Math.min(targets.length, maxRows)) + frameHeight;
 
   targetGrid = new Ext.grid.EditorGridPanel({
-    //frame: true,
     width: gridWidth,
     height: gridHeight,
     store: targetStore,
     hideHeaders: true,
-    viewConfig: {markDirty: false},
+    viewConfig: {
+                  markDirty: false,
+                  forceFit: true,
+                  autoFill: true
+                },
     colModel: new Ext.grid.ColumnModel({
       columns: [
         {
           id: 'target',
           header: 'Target',
           dataIndex: 'target',
-          width: gridWidth - 22,
+          width: gridWidth - 2,
           editor: {xtype: 'textfield'}
+        },
+        {
+            xtype: 'actioncolumn',
+            width:30,
+            sortable: false,
+            items: [{
+                icon: '/content/img/delete.gif',
+                tooltip: 'Delete Row',
+                handler: function(grid, rowIndex, colIndex) {
+                    var record = targetStore.getAt(rowIndex);
+                    var target = record.data.target;
+                    targetStore.remove(record);
+                    targets.remove(target);
+                }
+            }]
         }
       ]
     }),
@@ -1862,9 +1887,13 @@ function graphClicked(graphView, graphIndex, element, evt) {
     listeners: {
       afterrender: function (thisGrid) {
         thisGrid.getSelectionModel().selectFirstRow.defer(50, thisGrid.getSelectionModel());
+      },
+      resize: function (thisGrid) {
+        thisGrid.findParentByType('menu').doLayout();
       }
     }
   });
+
   menuItems.push(targetGrid);
 
   /* Setup our menus */
@@ -1986,6 +2015,24 @@ function graphClicked(graphView, graphIndex, element, evt) {
                }
              }
   });
+
+  //create new row
+  buttons.push({
+      xtype: 'button',
+      text: 'Add Target',
+      width: buttonWidth/2,
+      handler: function() {
+                 // Hide the other menus
+                 operationsMenu.hide();
+                 optionsMenu.doHide(); // private method... yuck
+                 functionsMenu.hide();
+
+                 targetStore.add([ new targetStore.recordType({target: 'Edit to save'}) ]);
+                 targets.push('Edit to save');
+                 targetGrid.setHeight((rowHeight * Math.min(targets.length, maxRows)) + frameHeight);
+      }
+  });
+
 
   menuItems.push({
     xtype: 'panel',
