@@ -565,9 +565,9 @@ function initDashboard () {
         { text: "New Graph",
           menu: {
             items: [
-//              { text: "Empty Graph",
-//                handler: newEmptyGraph
-//              },
+              { text: "Empty Graph",
+                handler: newEmptyGraph
+              },
               { text: "From URL",
                 handler: newFromUrl
               },
@@ -1307,9 +1307,28 @@ var GraphSize = {
 };
 
 
-//XXX Add once graph controls allow better +/-
-//function newEmptyGraph() {
-//}
+// New empty Graph
+function newEmptyGraph() {
+
+  var myParams = {
+    target: [""]
+  };
+
+  var graphTargetString = Ext.urlEncode({target: ""});
+
+  var urlParams = {};
+  Ext.apply(urlParams, defaultGraphParams);
+  Ext.apply(urlParams, myParams);
+  Ext.apply(urlParams, GraphSize);
+
+  var record = new GraphRecord({
+   target: graphTargetString,
+    params: myParams,
+    url: '/render?' + Ext.urlEncode(urlParams)
+    });
+  graphStore.add([record]);
+  updateGraphRecords();
+}
 
 function newFromUrl() {
   function applyUrl() {
