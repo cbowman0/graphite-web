@@ -1866,7 +1866,8 @@ function graphClicked(graphView, graphIndex, element, evt) {
     viewConfig: {
                   markDirty: false,
                   forceFit: true,
-                  autoFill: true
+                  autoFill: true,
+                  scrollOffset: 0
                 },
     colModel: new Ext.grid.ColumnModel({
       columns: [
@@ -1874,12 +1875,12 @@ function graphClicked(graphView, graphIndex, element, evt) {
           id: 'target',
           header: 'Target',
           dataIndex: 'target',
-          width: gridWidth - 2,
+          width: gridWidth - 30,
           editor: {xtype: 'textfield'}
         },
         {
             xtype: 'actioncolumn',
-            width:30,
+            width: 30,
             sortable: false,
             items: [{
                 icon: '/content/img/delete.gif',
