@@ -2643,7 +2643,7 @@ function applyState(state) {
   var timeConfig = state.timeConfig
   TimeRange.type = timeConfig.type;
   TimeRange.relativeStartQuantity = timeConfig.relativeStartQuantity || timeConfig.quantity;
-  TimeRange.relativeStartUnits = timeConfig.relativeStartUnits || timeconfig.units;
+  TimeRange.relativeStartUnits = timeConfig.relativeStartUnits || timeConfig.units;
   TimeRange.relativeUntilQuantity = timeConfig.relativeUntilQuantity || "";
   TimeRange.relativeUntilUnits = timeConfig.relativeUntilUnits || "";
   TimeRange.startDate = new Date(timeConfig.startDate);
