@@ -89,9 +89,6 @@ var GraphRecord = new Ext.data.Record.create([
 
 function graphStoreUpdated() {
   if (metricSelectorGrid) metricSelectorGrid.getView().refresh();
-  if ( RENDER_ENGINE != 'cairo' ) {
-    refreshGraphs();
-  }
 }
 
 graphStore = new Ext.data.ArrayStore({
@@ -382,7 +379,7 @@ function initDashboard () {
    '        </div>',
    '    </div>',
    '</div>',
-          '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); updateGraphRecords(); justClosedGraph = true;">X</div>',
+          '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); refreshGraphs(); justClosedGraph = true;">X</div>',
         '</div>',
       '</div>',
 
