@@ -89,6 +89,9 @@ var GraphRecord = new Ext.data.Record.create([
 
 function graphStoreUpdated() {
   if (metricSelectorGrid) metricSelectorGrid.getView().refresh();
+  if ( RENDER_ENGINE != 'cairo' ) {
+    refreshGraphs();
+  }
 }
 
 graphStore = new Ext.data.ArrayStore({
