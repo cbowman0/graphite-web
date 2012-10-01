@@ -996,7 +996,6 @@ function graphAreaToggle(target, options) {
     }
     Ext.apply(urlParams, GraphSize);
     Ext.apply(urlParams, myParams);
-    canvasId = Math.random().toString().substr(2)
     myParams['from'] = urlParams.from;
     myParams['until'] = urlParams.until;
 
@@ -1007,13 +1006,14 @@ function graphAreaToggle(target, options) {
       'width': GraphSize.width,
       'height': GraphSize.height,
       'name': this.storeId,
-      'index': canvasId,
     });
     graphStore.add([record]);
+    canvasId = graphStore.indexOf(record);
+    graphStore.getAt(canvasId).data.index = canvasId;
+    updateGraphRecords();
     if (RENDER_ENGINE != 'cairo') {
       $(".graphite" + canvasId).graphiteGraph("#graph" + canvasId, "", graphTargetList, urlParams.from, urlParams.until, Boolean(myParams.areaMode));
     }
-    updateGraphRecords();
   }
 }
 
@@ -1050,16 +1050,16 @@ function importGraphUrl(targetUrl, options) {
     Ext.apply(urlParams, params);
     Ext.apply(urlParams, GraphSize);
 
-    canvasId = Math.random().toString().substr(2);
     var record = new GraphRecord({
       target: graphTargetString,
       params: params,
       url: '/render?' + Ext.urlEncode(urlParams),
-      index: canvasId,
       'width': GraphSize.width,
       'height': GraphSize.height,
       });
       graphStore.add([record]);
+      canvasId = graphStore.indexOf(record);
+      graphStore.getAt(canvasId).data.index = canvasId;
       updateGraphRecords();
   }
 }
@@ -1405,7 +1405,6 @@ function newEmptyGraph() {
   Ext.apply(urlParams, myParams);
   Ext.apply(urlParams, GraphSize);
 
-  canvasId = Math.random().toString().substr(2);
   var record = new GraphRecord({
    target: graphTargetString,
     params: myParams,
@@ -1414,6 +1413,8 @@ function newEmptyGraph() {
    'height': GraphSize.height,
     });
   graphStore.add([record]);
+  canvasId = graphStore.indexOf(record);
+  graphStore.getAt(canvasId).data.index = canvasId;
   updateGraphRecords();
 }
 
