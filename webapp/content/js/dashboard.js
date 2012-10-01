@@ -1404,6 +1404,8 @@ function newEmptyGraph() {
   Ext.apply(urlParams, defaultGraphParams);
   Ext.apply(urlParams, myParams);
   Ext.apply(urlParams, GraphSize);
+  myParams['from'] = urlParams.from;
+  myParams['until'] = urlParams.until;
 
   var record = new GraphRecord({
    target: graphTargetString,
