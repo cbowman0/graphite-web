@@ -67,7 +67,7 @@ def get_data(request):
             stack=getattr(timeseries, 'stacked', None),
             ))
     if not result:
-        raise Http404
+        raise Exception, "No data for %s" % target
     return HttpResponse(json.dumps(result), mimetype="application/json")
 
 
