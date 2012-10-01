@@ -1050,10 +1050,14 @@ function importGraphUrl(targetUrl, options) {
     Ext.apply(urlParams, params);
     Ext.apply(urlParams, GraphSize);
 
+    canvasId = Math.random().toString().substr(2);
     var record = new GraphRecord({
       target: graphTargetString,
       params: params,
-      url: '/render?' + Ext.urlEncode(urlParams)
+      url: '/render?' + Ext.urlEncode(urlParams),
+      index: canvasId,
+      'width': GraphSize.width,
+      'height': GraphSize.height,
       });
       graphStore.add([record]);
       updateGraphRecords();
@@ -1401,10 +1405,13 @@ function newEmptyGraph() {
   Ext.apply(urlParams, myParams);
   Ext.apply(urlParams, GraphSize);
 
+  canvasId = Math.random().toString().substr(2);
   var record = new GraphRecord({
    target: graphTargetString,
     params: myParams,
-    url: '/render?' + Ext.urlEncode(urlParams)
+    url: '/render?' + Ext.urlEncode(urlParams),
+   'width': GraphSize.width,
+   'height': GraphSize.height,
     });
   graphStore.add([record]);
   updateGraphRecords();
