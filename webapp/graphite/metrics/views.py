@@ -149,20 +149,27 @@ def list_view(request):
     query = str( request.REQUEST['query'] )
   except:
     return HttpResponseBadRequest(content="Missing required parameter 'query'", mimetype="text/plain")
+  query_items = query.split('.')
 
   for t in list( store.find('*') ):
     for env in list( store.find('%s.*' % t.metric_path) ):
       for app in list( store.find('%s.*' % env.metric_path) ):
         for dc in list( store.find('%s.*' % app.metric_path) ):
           for id in list( store.find('%s.*' % dc.metric_path) ):
-            if query in id.metric_path: 
+            is_in = True
+            for q in  query_items:
+              if q in id.metric_path:
+                is_in = True
+              else:
+                is_in = False
+                break
+            if is_in:
               hosts.append({'path': id.metric_path})
 
   hosts.sort(key=lambda node: node['path'])
 
   content = json.dumps({ 'metrics' : hosts })
   response = HttpResponse(content, mimetype='application/json')
- 
   response['Pragma'] = 'no-cache'
   response['Cache-Control'] = 'no-cache'
   return response

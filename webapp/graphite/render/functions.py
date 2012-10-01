@@ -167,6 +167,19 @@ def sumSeries(requestContext, *seriesLists):
     return []
   #name = "sumSeries(%s)" % ','.join((s.name for s in seriesList))
   name = "sumSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+
+  # trim right side of the graph to avoid dip when only part of most recent metrics has entered the system
+  for s in seriesList:
+    if (s[-1] is None) and (s[-2] is not None):
+      for sl in seriesList:
+        sl[-1] = None
+      break
+  for s in seriesList:
+    if (s[-2] is None) and (s[-3] is not None):
+      for sl in seriesList:
+        sl[-2] = None
+      break
+
   values = ( safeSum(row) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
   series.pathExpression = name
@@ -895,6 +908,7 @@ def stacked(requestContext,seriesLists,stackName='__DEFAULT__'):
     newSeries = TimeSeries(newName, series.start, series.end, series.step, newValues)
     newSeries.options['stacked'] = True
     newSeries.pathExpression = newName
+    newSeries.stacked = stackName
     results.append(newSeries)
   requestContext['totalStack'][stackName] = totalStack
   return results

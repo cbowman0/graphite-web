@@ -178,8 +178,9 @@ def template(request, name, host_id):
   except Template.DoesNotExist:
     context['initialError'] = "Template '%s' does not exist." % name
   else:
-    context['initialState'] = template.loadState(host_id)
-
+    state = json.loads(template.loadState(host_id))
+    state['name'] = '%s/%s' % (name, host_id)
+    context['initialState'] = json.dumps(state)
   return render_to_response("dashboard.html", context)
 
 

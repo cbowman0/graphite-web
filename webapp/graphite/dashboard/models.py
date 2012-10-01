@@ -14,7 +14,7 @@ class Dashboard(models.Model):
 
 
 class Template(models.Model):
-  metric_path_re = re.compile(r'([*\w\d]+\.){5}')
+  metric_path_re = re.compile(r'([^.()]+\.){5}')
 
   class Admin: pass
   name = models.CharField(primary_key=True, max_length=128)
