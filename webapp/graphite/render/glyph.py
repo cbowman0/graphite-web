@@ -923,18 +923,34 @@ class LineGraph(Graph):
     startX = (startX or self.area['xmin'])
     pattern = self.ctx.copy_path()
 
-    self.ctx.line_to(x, self.area['ymax'])                  # bottom endX
-    self.ctx.line_to(startX, self.area['ymax'])             # bottom startX
+    self.ctx.line_to(x,  self.getYCoord(0.0))                  # bottom endX
+    self.ctx.line_to(startX, self.getYCoord(0.0))             # bottom startX
     self.ctx.close_path()
     self.ctx.fill()
 
-    self.ctx.append_path(pattern)
-    self.ctx.line_to(x, self.area['ymax'])                  # bottom endX
-    self.ctx.line_to(self.area['xmax'], self.area['ymax'])  # bottom right
-    self.ctx.line_to(self.area['xmax'], self.area['ymin'])  # top right
-    self.ctx.line_to(self.area['xmin'], self.area['ymin'])  # top left
-    self.ctx.line_to(self.area['xmin'], self.area['ymax'])  # bottom left
-    self.ctx.line_to(startX, self.area['ymax'])             # bottom startX
+    if y == self.getYCoord(0.0):
+      return
+
+    if y < self.getYCoord(0.0):
+      self.ctx.append_path(pattern)
+      self.ctx.line_to(x, self.getYCoord(0.0))                  # zero-Y endX
+      self.ctx.line_to(startX, self.getYCoord(0.0))                  # zero-Y startX
+      self.ctx.line_to(startX, self.area['ymax'])                  # bottom startX
+      self.ctx.line_to(self.area['xmax'], self.area['ymax'])  # bottom right
+      self.ctx.line_to(self.area['xmax'], self.area['ymin'])  # top right
+      self.ctx.line_to(self.area['xmin'], self.area['ymin'])  # top left
+      self.ctx.line_to(self.area['xmin'], self.area['ymax'])  # bottom left
+      self.ctx.line_to(startX, self.area['ymax'])             # bottom startX
+    else:
+      self.ctx.append_path(pattern)
+      self.ctx.line_to(x, self.getYCoord(0.0))                  # zero-Y endX
+      self.ctx.line_to(startX, self.getYCoord(0.0))                  # zero-Y startX
+      self.ctx.line_to(startX, self.area['ymin'])                  # top startX
+      self.ctx.line_to(self.area['xmax'], self.area['ymin'])  # top right
+      self.ctx.line_to(self.area['xmax'], self.area['ymax'])  # bottom right
+      self.ctx.line_to(self.area['xmin'], self.area['ymax'])  # bottom left
+      self.ctx.line_to(self.area['xmin'], self.area['ymin'])  # top left
+      self.ctx.line_to(startX, self.area['ymin'])             # top startX
     self.ctx.close_path()
     self.ctx.clip()
 
