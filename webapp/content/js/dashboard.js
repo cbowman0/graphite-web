@@ -1064,7 +1064,7 @@ function importGraphUrl(targetUrl, options) {
   }
 }
 
-function updateGraphRecords() {
+function updateGraphRecords(refreshAll) {
   graphStore.each(function (item, index) {
     var params = {};
 
@@ -1081,12 +1081,7 @@ function updateGraphRecords() {
         delete params["uniq"];
     }
 
-    // Check if new URL is any different than old.  If not, then don't change the _uniq value
-    params._uniq = prior_params._uniq;
-    var new_url = '/render?' + Ext.urlEncode(params);
-    if (new_url != prior_url) {
-      params._uniq = Math.random();
-    }
+    params._uniq = Math.random();
 
     item.set('url', '/render?' + Ext.urlEncode(params));
     item.set('width', GraphSize.width);
