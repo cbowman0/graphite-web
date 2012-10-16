@@ -103,6 +103,11 @@ def safeMax(values):
   if safeValues:
     return max(safeValues)
 
+def safeAbsMax(values):
+  safeValues = [abs(v) for v in values if v is not None]
+  if safeValues:
+    return max(safeValues)
+
 def safeMap(function, values):
   safeValues = [v for v in values if v is not None]
   if safeValues:
@@ -1060,7 +1065,7 @@ def legendValue(requestContext, seriesList, *valueTypes):
     'avg':   lambda s: safeDiv(safeSum(s), safeLen(s)),
     'total': safeSum,
     'min':   safeMin,
-    'max':   safeMax,
+    'max':   safeAbsMax,
     'last':  last
   }
   system = None
