@@ -54,6 +54,7 @@ def renderView(request):
   if requestOptions.has_key('params'):
     requestContext['params'] = requestOptions['params']
   data = requestContext['data']
+  totals = []
 
   # First we check the request cache
   if useCache:
@@ -89,7 +90,7 @@ def renderView(request):
       targets = requestOptions['targets']
       startTime = requestOptions['startTime']
       endTime = requestOptions['endTime']
-      dataKey = hashData(targets, startTime, endTime)
+      dataKey = hashData(targets, startTime, endTime, extra_options=requestOptions.has_key('printTotals'))
       cachedData = cache.get(dataKey)
       if cachedData:
         log.cache("Data-Cache hit [%s]" % dataKey)
@@ -108,6 +109,24 @@ def renderView(request):
         seriesList = evaluateTarget(requestContext, target)
         log.rendering("Retrieval of %s took %.6f" % (target, time() - t))
         data.extend(seriesList)
+
+      # Contruct a legend string with totals
+      if requestOptions.get('printTotals', False) and requestContext.has_key('totalStack'):
+        from functions import legendValue
+        from graphite.render.datalib import TimeSeries
+        series_sample = data[0]
+        start = series_sample.start
+        end = series_sample.end
+        step = series_sample.step
+        for (stack, values) in requestContext['totalStack'].items():
+          name = stack
+          if name == '__DEFAULT__':
+            name = ''
+          name = "Total %s" % name
+          totalSeries = [TimeSeries(name, start, end, step, values)]
+          legendString = legendValue(requestContext, totalSeries, "last", "avg", "max", "si")[0].name
+          totals.append(legendString)
+    graphOptions['totalsLegend'] = totals
 
     if useCache:
       cache.set(dataKey, data, cacheTimeout)
@@ -219,6 +238,8 @@ def parseOptions(request):
     requestOptions['noCache'] = True
   if 'params' in queryParams:
       requestOptions['params'] = json.loads(queryParams['params'])
+  if queryParams.get('printTotals', None) == 'true':
+    requestOptions['printTotals'] = True
 
   requestOptions['localOnly'] = queryParams.get('local') == '1'
 
