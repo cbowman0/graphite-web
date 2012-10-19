@@ -3,9 +3,19 @@ import time
 from django.conf import settings
 from graphite.render.grammar import grammar
 from graphite.render.datalib import fetchData, TimeSeries
+import re
 
+
+def expandTemplateVariables(requestContext, target):
+  params = requestContext.get('params', {})
+  def repl(matchObj):
+    (val, var) = matchObj.groups()
+    return params.get(var, val)
+  target = re.sub(r'/([^/]*)/([^/]+)/', repl, target)
+  return target
 
 def evaluateTarget(requestContext, target):
+  target = expandTemplateVariables(requestContext, target)
   tokens = grammar.parseString(target)
   result = evaluateTokens(requestContext, tokens)
 

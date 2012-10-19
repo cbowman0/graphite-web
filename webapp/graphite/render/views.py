@@ -51,6 +51,8 @@ def renderView(request):
     'localOnly' : requestOptions['localOnly'],
     'data' : []
   }
+  if requestOptions.has_key('params'):
+    requestContext['params'] = requestOptions['params']
   data = requestContext['data']
 
   # First we check the request cache
@@ -215,6 +217,8 @@ def parseOptions(request):
       requestOptions['jsonp'] = queryParams['jsonp']
   if 'noCache' in queryParams:
     requestOptions['noCache'] = True
+  if 'params' in queryParams:
+      requestOptions['params'] = json.loads(queryParams['params'])
 
   requestOptions['localOnly'] = queryParams.get('local') == '1'
 

@@ -16,7 +16,7 @@ var dashboardURL;
 var refreshTask;
 var spacer;
 var justClosedGraph = false;
-var NOT_EDITABLE = ['from', 'until', 'width', 'height', 'target', 'uniq', '_uniq'];
+var NOT_EDITABLE = ['from', 'until', 'width', 'height', 'target', 'uniq', '_uniq', 'params'];
 var editor = null;
 
 var cookieProvider = new Ext.state.CookieProvider({
@@ -528,6 +528,13 @@ function initDashboard () {
   });
 
   /* Toolbar items */
+  var paramValues = {
+          text: "Params",
+          tooltip: 'Set variable parameters',
+          handler: selectParamValues,
+          scope: this
+  };
+
   var relativeTimeRange = {
           icon: CLOCK_ICON,
           text: "Relative Time Range",
@@ -732,6 +739,7 @@ function initDashboard () {
       items: [
         dashboardMenu,
         graphsMenu,
+        paramValues,
         '-',
         shareButton,
         '-',
@@ -1317,6 +1325,70 @@ function selectRelativeTime() {
   });
   win.show();
 }
+
+function selectParamValues() {
+  savedParams = Ext.decode(defaultGraphParams['params']);
+  paramVars = []
+  seenParams = {}
+  graphStore.each(function (item, index) {
+    for (var i = 0; i < item.data.params.target.length; i++) {
+      target = item.data.params.target[i];
+      target = target.split('/');
+      for (var t = 0; t < target.length; t++ ) {
+        if( t % 3 == 2 ) {
+          param = target[t];
+          if( ! seenParams[param] ) {
+            var paramField = new Ext.form.TextField({
+              fieldLabel: param,
+              width: 90,
+              allowBlank: true,
+              value: savedParams[param],
+            });
+            paramVars.push(paramField);
+            seenParams[param] = true;
+          }
+        }
+      }
+    }
+  });
+  var win;
+
+  function updateParamVars() {
+// HERE
+    params = {};
+    for (var i = 0; i < paramVars.length; i++) {
+      paramField = paramVars[i];
+      val = paramField.getValue();
+      param = paramField.fieldLabel;
+      if(val) {
+        params[param] = val;
+      }
+    }
+    defaultGraphParams['params'] = JSON.stringify(params);
+    saveDefaultGraphParams();
+    refreshGraphs();
+    win.close();
+  }
+
+  win = new Ext.Window({
+    title: "Set target parameters",
+    width: 205,
+    resizable: true,
+    modal: true,
+    layout: 'form',
+    labelAlign: 'right',
+    labelWidth: 90,
+    items: paramVars,
+    buttonAlign: 'center',
+    buttons: [
+      {text: 'Ok', handler: updateParamVars},
+      {text: 'Cancel', handler: function () { win.close(); } }
+    ]
+  });
+  win.show();
+}
+
+
 
 function selectAbsoluteTime() {
   var startDateField = new Ext.form.DateField({
