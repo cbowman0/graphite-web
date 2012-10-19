@@ -29,6 +29,11 @@ var RENDER_ENGINE = cookieProvider.get('render-engine') || 'cairo';
 
 var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') != 'false';
 
+if ("onhashchange" in window) // does the browser support the hashchange event?
+  window.onhashchange = function () {
+    location.reload();
+  }
+
 /* Nav Bar configuration */
 var navBarNorthConfig = {
   region: 'north',
@@ -2720,11 +2725,12 @@ function saveDashboard() {
 
 function saveTemplate() {
   var nameField = new Ext.form.TextField({
-    id: 'name-field',
+    id: 'dashboard-save-template-name',
     fieldLabel: "Template Name",
     width: 240,
     allowBlank: false,
     align: 'center',
+    value: dashboardName.split('/')[0],
   });
 
   var win;
@@ -2735,7 +2741,7 @@ function saveTemplate() {
   }
 
   win = new Ext.Window({
-    title: "Change Graph Size",
+    title: "Save dashboard as a template",
     width: 400,
     height: 100,
     resizable: false,
