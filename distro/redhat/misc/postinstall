@@ -20,5 +20,5 @@ fi;
 
 /usr/bin/python ${GRAPHITE_PATH}/webapp/graphite/manage.py syncdb --noinput
 
-/bin/chown -R apache.apache ${GRAPHITE_PATH}/storage
-/bin/chown -R apache.apache ${GRAPHITE_PATH}/webapp
+#/bin/chown -R apache.apache ${GRAPHITE_PATH}/storage
+#/bin/chown -R apache.apache ${GRAPHITE_PATH}/webapp
