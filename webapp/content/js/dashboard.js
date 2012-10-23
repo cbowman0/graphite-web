@@ -1332,6 +1332,9 @@ function selectRelativeTime() {
 
 function selectParamValues() {
   savedParams = Ext.decode(defaultGraphParams['params']);
+  if(!savedParams) {
+    savedParams = {};
+  }
   paramVars = []
   seenParams = {}
   graphStore.each(function (item, index) {
