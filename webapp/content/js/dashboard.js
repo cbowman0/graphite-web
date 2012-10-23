@@ -121,7 +121,6 @@ if (sessionDefaultParamsJson && sessionDefaultParamsJson.length > 0) {
   defaultGraphParams = Ext.apply({}, originalDefaultGraphParams);
 }
 
-
 function initDashboard () {
 
   // Populate naming-scheme based datastructures
@@ -1359,7 +1358,6 @@ function selectParamValues() {
   var win;
 
   function updateParamVars() {
-// HERE
     params = {};
     for (var i = 0; i < paramVars.length; i++) {
       paramField = paramVars[i];
@@ -1370,8 +1368,10 @@ function selectParamValues() {
       }
     }
     defaultGraphParams['params'] = JSON.stringify(params);
-    saveDefaultGraphParams();
-    refreshGraphs();
+    urlparts = window.location.href.split('#')
+    new_location = Ext.urlAppend(urlparts[0].split('?')[0], 'params='+defaultGraphParams['params']) + '#'+urlparts[1];
+    window.location.href = new_location;
+
     win.close();
   }
 
@@ -2792,25 +2792,36 @@ function sendSaveRequest(name) {
   });
 }
 
-function sendLoadRequest(name) {
-  Ext.Ajax.request({
-    url: "/dashboard/load/" + name,
-    success: function (response) {
-               var result = Ext.decode(response.responseText);
-               if (result.error) {
-                 Ext.Msg.alert("Error Loading Dashboard", result.error);
-               } else {
-                 applyState(result.state);
-               }
-             },
-    failure: failedAjaxCall
-  });
+function sendLoadRequest(name, reset_params) {
+  urlparts = window.location.href.split('#')
+  if(reset_params && urlparts[0].split('?')[1]) {
+    new_location = urlparts[0].split('?')[0] + '#'+name;
+    window.location.href = new_location;
+  } else {
+    Ext.Ajax.request({
+      url: "/dashboard/load/" + name,
+      success: function (response) {
+                 var result = Ext.decode(response.responseText);
+                 if (result.error) {
+                   Ext.Msg.alert("Error Loading Dashboard", result.error);
+                 } else {
+                   applyState(result.state);
+                 }
+               },
+      failure: failedAjaxCall
+    });
+  }
 }
 
 function sendLoadTemplateRequest(name, host_id) {
-  Ext.Ajax.request({
-    url: "/dashboard/load_template/" + name + "/" + host_id,
-    success: function (response) {
+  urlparts = window.location.href.split('#')
+  if(urlparts[0].split('?')[1]) {
+    new_location = urlparts[0].split('?')[0] + '#'+name+'/'+host_id;
+    window.location.href = new_location;
+  } else {
+    Ext.Ajax.request({
+      url: "/dashboard/load_template/" + name + "/" + host_id,
+      success: function (response) {
                var result = Ext.decode(response.responseText);
                if (result.error) {
                  Ext.Msg.alert("Error Loading Template", result.error);
@@ -2818,8 +2829,9 @@ function sendLoadTemplateRequest(name, host_id) {
                  applyState(result.state);
                }
              },
-    failure: failedAjaxCall
-  });
+      failure: failedAjaxCall
+    });
+  }
 }
 
 function getState() {
@@ -2886,7 +2898,16 @@ function applyState(state) {
 
   //state.defaultGraphParams = {...}
   defaultGraphParams = state.defaultGraphParams || originalDefaultGraphParams;
-
+  param_vars = Ext.urlDecode(window.location.search.substring(1))['params'];
+  if(param_vars) {
+    defaultGraphParams['params'] = param_vars;
+  } else {
+    if(defaultGraphParams['params']) {
+      urlparts = window.location.href.split('#')
+      new_location = Ext.urlAppend(urlparts[0], 'params='+defaultGraphParams['params']) + '#'+urlparts[1];
+      window.location.href = new_location;
+    }
+  }
   //state.graphs = [ [id, target, params, url], ... ]
   graphStore.loadData(state.graphs);
 
@@ -2935,7 +2956,7 @@ function setDashboardName(name) {
     saveButton.setText("Save");
     saveButton.disable();
   } else {
-    var urlparts = location.href.split('#')[0].split('/');
+    var urlparts = location.href.split('#')[0].split('?')[0].split('/');
     var i = urlparts.indexOf('dashboard');
     if (i == -1) {
       Ext.Msg.alert("Error", "urlparts = " + Ext.encode(urlparts) + " and indexOf(dashboard) = " + i);
@@ -2946,7 +2967,10 @@ function setDashboardName(name) {
     dashboardURL = urlparts.join('/');
 
     document.title = name + " - Graphite Dashboard";
+
     window.location.hash = name;
+
+
     navBar.setTitle(name + " - (" + dashboardURL + ")");
     saveButton.setText('Save "' + name + '"');
     saveButton.enable();
@@ -3140,7 +3164,7 @@ function showTemplateFinder() {
     listeners: {
       keyup: function (field, e) {
                   if (e.getKey() == e.ENTER) {
-                    sendLoadRequest(field.getValue());
+                    sendLoadRequest(field.getValue(), reset_params=true);
                     win.close();
                   } else {
                     queryUpdateTask.delay(FINDER_QUERY_DELAY);
@@ -3228,7 +3252,7 @@ function showDashboardFinder() {
   function openSelected() {
     var selected = dashboardsList.getSelectedRecords();
     if (selected.length > 0) {
-      sendLoadRequest(selected[0].data.name);
+      sendLoadRequest(selected[0].data.name, reset_params=true);
     }
     win.close();
   }
@@ -3273,7 +3297,7 @@ function showDashboardFinder() {
 
       dblclick: function (listView, index, node, e) {
                   var record = dashboardsStore.getAt(index);
-                  sendLoadRequest(record.data.name);
+                  sendLoadRequest(record.data.name, reset_params=true);
                   win.close();
                 }
     },
@@ -3303,7 +3327,7 @@ function showDashboardFinder() {
     listeners: {
       keyup: function (field, e) {
                   if (e.getKey() == e.ENTER) {
-                    sendLoadRequest(field.getValue());
+                    sendLoadRequest(field.getValue(), reset_params=true);
                     win.close();
                   } else {
                     queryUpdateTask.delay(FINDER_QUERY_DELAY);
