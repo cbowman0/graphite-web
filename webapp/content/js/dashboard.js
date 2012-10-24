@@ -29,10 +29,12 @@ var RENDER_ENGINE = cookieProvider.get('render-engine') || 'cairo';
 
 var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') != 'false';
 
+
 if ("onhashchange" in window) // does the browser support the hashchange event?
   window.onhashchange = function () {
     location.reload();
   }
+
 
 /* Nav Bar configuration */
 var navBarNorthConfig = {
@@ -1332,11 +1334,20 @@ function selectRelativeTime() {
 
 function selectParamValues() {
   savedParams = Ext.decode(defaultGraphParams['params']);
+  paramVars = [];
   if(!savedParams) {
     savedParams = {};
   }
-  paramVars = []
-  seenParams = {}
+  urlparts = window.location.href.split('#');
+  // If URL contains params, warn that dashboard is gonna be saved
+  if(urlparts[0].split('?')[1]) {
+    paramVars = [{
+      xtype:'panel',
+      title:'Current dashboard will be saved before applying parameters',
+    }];
+  };
+  seenParams = {};
+  thereAreParams = false;
   graphStore.each(function (item, index) {
     for (var i = 0; i < item.data.params.target.length; i++) {
       target = item.data.params.target[i];
@@ -1348,39 +1359,53 @@ function selectParamValues() {
             var paramField = new Ext.form.TextField({
               fieldLabel: param,
               width: 90,
+              xtype: 'text',
               allowBlank: true,
               value: savedParams[param],
             });
             paramVars.push(paramField);
             seenParams[param] = true;
+            thereAreParams = true;
           }
         }
       }
     }
   });
+  if(!thereAreParams) {
+    paramVars = [{
+      xtype:'panel',
+      title:'None of graph targets contain parameters. Parameter format example: target.path/default_value/var_name/target.path',
+    }];
+  }
   var win;
 
   function updateParamVars() {
     params = {};
     for (var i = 0; i < paramVars.length; i++) {
       paramField = paramVars[i];
-      val = paramField.getValue();
-      param = paramField.fieldLabel;
-      if(val) {
-        params[param] = val;
+   console.info(paramField);
+      if(paramField['xtype'] == 'text') {
+        val = paramField.getValue();
+        param = paramField.fieldLabel;
+        if(val) {
+          params[param] = val;
+        }
       }
     }
     defaultGraphParams['params'] = JSON.stringify(params);
-    urlparts = window.location.href.split('#')
-    new_location = Ext.urlAppend(urlparts[0].split('?')[0], 'params='+defaultGraphParams['params']) + '#'+urlparts[1];
-    window.location.href = new_location;
-
+    dashboardURL = Ext.urlAppend(urlparts[0].split('?')[0], 'params='+defaultGraphParams['params']) + '#'+urlparts[1];
+    // If dashboard URL contains params - update them, otherwise just update the state
+    if(urlparts[0].split('?')[1]) {
+      // Save dashboard as changing location will reload it
+      sendSaveRequest(dashboardName, dashboardURL);
+    }
     win.close();
+    refreshGraphs();
   }
 
   win = new Ext.Window({
     title: "Set target parameters",
-    width: 205,
+    width: 305,
     resizable: true,
     modal: true,
     layout: 'form',
@@ -2733,7 +2758,7 @@ function saveTemplate() {
     width: 240,
     allowBlank: false,
     align: 'center',
-    value: dashboardName.split('/')[0],
+    value: dashboardName ? dashboardName.split('/')[0]: '',
   });
 
   var win;
@@ -2778,7 +2803,7 @@ function sendSaveTemplateRequest(name) {
   });
 }
 
-function sendSaveRequest(name) {
+function sendSaveRequest(name, newURL) {
   Ext.Ajax.request({
     url: "/dashboard/save/" + name,
     method: 'POST',
@@ -2789,6 +2814,11 @@ function sendSaveRequest(name) {
                var result = Ext.decode(response.responseText);
                if (result.error) {
                  Ext.Msg.alert("Error", "There was an error saving this dashboard: " + result.error);
+               }
+               if(newURL) {
+                 window.location = newURL;
+               } else {
+                 window.location.hash = name;
                }
              },
     failure: failedAjaxCall
@@ -2907,7 +2937,7 @@ function applyState(state) {
   } else {
     if(defaultGraphParams['params']) {
       urlparts = window.location.href.split('#')
-      new_location = Ext.urlAppend(urlparts[0], 'params='+defaultGraphParams['params']) + '#'+urlparts[1];
+      new_location = Ext.urlAppend(urlparts[0], 'params='+defaultGraphParams['params']) + '#'+state.name;
       window.location.href = new_location;
     }
   }
@@ -2915,6 +2945,9 @@ function applyState(state) {
   graphStore.loadData(state.graphs);
 
   refreshGraphs();
+  if(defaultGraphParams['params']) {
+    dashboardURL = Ext.urlAppend(dashboardURL, 'params='+defaultGraphParams['params']);
+  }
 }
 
 function deleteDashboard(name) {
@@ -2971,9 +3004,6 @@ function setDashboardName(name) {
 
     document.title = name + " - Graphite Dashboard";
 
-    window.location.hash = name;
-
-
     navBar.setTitle(name + " - (" + dashboardURL + ")");
     saveButton.setText('Save "' + name + '"');
     saveButton.enable();
@@ -2982,6 +3012,7 @@ function setDashboardName(name) {
 }
 
 function failedAjaxCall(response, options) {
+  console.info("Ajax call failed, response was :" + response.responseText);
   Ext.Msg.alert(
     "Ajax Error",
     "Ajax call failed, response was :" + response.responseText
