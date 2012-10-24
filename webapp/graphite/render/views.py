@@ -90,7 +90,7 @@ def renderView(request):
       targets = requestOptions['targets']
       startTime = requestOptions['startTime']
       endTime = requestOptions['endTime']
-      dataKey = hashData(targets, startTime, endTime, extra_options=requestOptions.has_key('printTotals'))
+      dataKey = hashData(targets, startTime, endTime, extra_options=[requestOptions.has_key('printTotals'),requestOptions.get('params', '')])
       cachedData = cache.get(dataKey)
       if cachedData:
         log.cache("Data-Cache hit [%s]" % dataKey)

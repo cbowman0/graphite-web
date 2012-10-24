@@ -33,7 +33,7 @@ def hashRequest(request):
   return compactHash(myHash)
 
 
-def hashData(targets, startTime, endTime, extra_options=''):
+def hashData(targets, startTime, endTime, extra_options=None):
   targetsString = ','.join(targets)
   startTimeString = startTime.strftime("%Y%m%d_%H%M")
   endTimeString = endTime.strftime("%Y%m%d_%H%M")
