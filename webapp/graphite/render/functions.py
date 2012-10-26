@@ -571,6 +571,23 @@ def scale(requestContext, seriesList, factor):
       series[i] = safeMul(value,factor)
   return seriesList
 
+def invert(requestContext, seriesList):
+  """
+  Takes one metric or a wildcard seriesList, and inverts each datapoint (i.e. 1/x).
+
+  Example:
+
+  .. code-block:: none
+
+    &target=invert(Server.instance01.threads.busy)
+
+  """
+  for series in seriesList:
+    series.name = "invert(%s)" % (series.name)
+    for i,value in enumerate(series):
+      series[i] = safeDiv(1,value)
+  return seriesList
+
 def scaleToSeconds(requestContext, seriesList, seconds):
   """
   Takes one metric or a wildcard seriesList and returns "value per seconds" where
@@ -2123,6 +2140,22 @@ def transformNull(requestContext, seriesList, default=0):
     del series[:len(values)]
   return seriesList
 
+def countSeries(requestContext, *seriesLists):
+  """
+  Draws a horizontal line representing the number of nodes found in the seriesList.
+
+  .. code-block:: none
+
+    &target=countSeries(carbon.agents.*.*)
+
+  """
+  (seriesList,start,end,step) = normalize(seriesLists)
+  name = "countSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+  values = ( int(len(row)) for row in izip(*seriesList) )
+  series = TimeSeries(name,start,end,step,values)
+  series.pathExpression = name
+  return [series]
+
 def group(requestContext, *seriesLists):
   """
   Takes an arbitrary number of seriesLists and adds them to a single seriesList. This is used
@@ -2605,9 +2638,11 @@ SeriesFunctions = {
   'maxSeries' : maxSeries,
   'rangeOfSeries': rangeOfSeries,
   'percentileOfSeries': percentileOfSeries,
+  'countSeries': countSeries,
 
   # Transform functions
   'scale' : scale,
+  'invert' : invert,
   'scaleToSeconds' : scaleToSeconds,
   'offset' : offset,
   'derivative' : derivative,
