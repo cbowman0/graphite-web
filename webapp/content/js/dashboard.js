@@ -1851,6 +1851,15 @@ function graphClicked(graphView, graphIndex, element, evt) {
     menu.destroy();
   }
 
+  function syncGraphs(thisStore, record, operation) {
+    var targets = [];
+    thisStore.each(function (rec) { targets.push(rec.data.target.replace(/'/g, '"')); });
+    selectedRecord.data.params.target = targets;
+    selectedRecord.data.target = Ext.urlEncode({target: targets});
+    refreshGraphs();
+  }
+
+
   /* Inline store definition hackery*/
   var functionsButton;
   var targets = record.data.params.target;
@@ -1859,21 +1868,17 @@ function graphClicked(graphView, graphIndex, element, evt) {
     fields: ['target'],
     data: targets,
     listeners: {
-      update: function (thisStore, record, operation) {
-        var targets = [];
-        thisStore.each(function (rec) { targets.push(rec.data.target); });
-        selectedRecord.data.params.target = targets;
-        selectedRecord.data.target = Ext.urlEncode({target: targets});
-        refreshGraphs();
-      }
+      update: syncGraphs,
+      remove: syncGraphs,
+      add: syncGraphs,
     }
   });
 
-  var buttonWidth = 150;
+  var buttonWidth = 115;
   var rowHeight = 21;
   var maxRows = 6;
   var frameHeight = 5;
-  var gridWidth = (buttonWidth * 3) + 2;
+  var gridWidth = (buttonWidth * 4) + 2;
   var gridHeight = (rowHeight * Math.min(targets.length, maxRows)) + frameHeight;
 
   targetGrid = new Ext.grid.EditorGridPanel({
@@ -1889,9 +1894,62 @@ function graphClicked(graphView, graphIndex, element, evt) {
           id: 'target',
           header: 'Target',
           dataIndex: 'target',
-          width: gridWidth - 22,
+          width: gridWidth - 90,
           editor: {xtype: 'textfield'}
-        }
+        },
+        {
+            xtype: 'actioncolumn',
+            width: 30,
+            sortable: false,
+            items: [{
+                icon: '/content/img/move_up.png',
+                tooltip: 'Move Up',
+                handler: function(grid, rowIndex, colIndex) {
+                    var record = targetStore.getAt(rowIndex);
+                    var target = record.data.target;
+                    targetStore.remove(record);
+                    if(rowIndex > 0) {
+                        targetStore.insert(rowIndex-1, record);
+                    } else {
+                        targetStore.add(record);
+                    }
+                }
+            }]
+        },
+        {
+            xtype: 'actioncolumn',
+            width: 30,
+            sortable: false,
+            items: [{
+                icon: '/content/img/move_down.png',
+                tooltip: 'Move Down',
+                handler: function(grid, rowIndex, colIndex) {
+                    var record = targetStore.getAt(rowIndex);
+                    var target = record.data.target;
+                    targetStore.remove(record);
+                    if(rowIndex < targetStore.getTotalCount()-1) {
+                        targetStore.insert(rowIndex+1, record);
+                    } else {
+                        targetStore.insert(0, record);
+                    }
+                }
+            }]
+        },
+        {
+            xtype: 'actioncolumn',
+            width: 30,
+            sortable: false,
+            items: [{
+                icon: '/content/img/delete.gif',
+                tooltip: 'Delete Row',
+                handler: function(grid, rowIndex, colIndex) {
+                    var record = targetStore.getAt(rowIndex);
+                    var target = record.data.target;
+                    targetStore.remove(record);
+                    targets.remove(target);
+                }
+            }]
+        },
       ]
     }),
     selModel: new Ext.grid.RowSelectionModel({
@@ -2076,6 +2134,24 @@ function graphClicked(graphView, graphIndex, element, evt) {
                }
              }
   });
+
+  //create new row
+  buttons.push({
+      xtype: 'button',
+      text: 'Add Target',
+      width: buttonWidth,
+      handler: function() {
+                 // Hide the other menus
+                 operationsMenu.hide();
+                 optionsMenu.doHide(); // private method... yuck
+                 functionsMenu.hide();
+
+                 targetStore.add([ new targetStore.recordType({target: 'Edit to save'}) ]);
+                 targets.push('Edit to save');
+                 targetGrid.setHeight((rowHeight * Math.min(targets.length, maxRows)) + frameHeight);
+      }
+  });
+
 
   menuItems.push({
     xtype: 'panel',
