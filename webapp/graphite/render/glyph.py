@@ -138,6 +138,7 @@ class Graph:
     self.margin = int( params.get('margin',10) )
     self.userTimeZone = params.get('tz')
     self.logBase = params.get('logBase', None)
+    self.totalsLegend = params.get('totalsLegend', [])
     self.minorY = int(params.get('minorY', 1))
     if self.logBase:
       if self.logBase == 'e':
@@ -504,7 +505,7 @@ class LineGraph(Graph):
                   'yMaxRight', 'yLimitLeft', 'yLimitRight', 'yStepLeft', \
                   'yStepRight', 'rightWidth', 'rightColor', 'rightDashed', \
                   'leftWidth', 'leftColor', 'leftDashed', 'xFormat', 'minorY', \
-                  'hideYAxis', 'uniqueLegend', 'vtitleRight')
+                  'hideYAxis', 'uniqueLegend', 'vtitleRight', 'printTotals')
   validLineModes = ('staircase','slope','connected')
   validAreaModes = ('none','first','all','stacked')
   validPieModes = ('maximum', 'minimum', 'average')
@@ -628,6 +629,7 @@ class LineGraph(Graph):
 
     if not params.get('hideLegend', len(self.data) > settings.LEGEND_MAX_ITEMS):
       elements = [ (series.name,series.color,series.options.get('secondYAxis')) for series in self.data if series.name ]
+      elements.extend([(name, 'white', None) for name in self.totalsLegend])
       self.drawLegend(elements, params.get('uniqueLegend', False))
 
     #Setup axes, labels, and grid
@@ -925,18 +927,34 @@ class LineGraph(Graph):
     startX = (startX or self.area['xmin'])
     pattern = self.ctx.copy_path()
 
-    self.ctx.line_to(x, self.area['ymax'])                  # bottom endX
-    self.ctx.line_to(startX, self.area['ymax'])             # bottom startX
+    self.ctx.line_to(x,  self.getYCoord(0.0))                  # bottom endX
+    self.ctx.line_to(startX, self.getYCoord(0.0))             # bottom startX
     self.ctx.close_path()
     self.ctx.fill()
 
-    self.ctx.append_path(pattern)
-    self.ctx.line_to(x, self.area['ymax'])                  # bottom endX
-    self.ctx.line_to(self.area['xmax'], self.area['ymax'])  # bottom right
-    self.ctx.line_to(self.area['xmax'], self.area['ymin'])  # top right
-    self.ctx.line_to(self.area['xmin'], self.area['ymin'])  # top left
-    self.ctx.line_to(self.area['xmin'], self.area['ymax'])  # bottom left
-    self.ctx.line_to(startX, self.area['ymax'])             # bottom startX
+    if y == self.getYCoord(0.0):
+      return
+
+    if y < self.getYCoord(0.0):
+      self.ctx.append_path(pattern)
+      self.ctx.line_to(x, self.getYCoord(0.0))                  # zero-Y endX
+      self.ctx.line_to(startX, self.getYCoord(0.0))                  # zero-Y startX
+      self.ctx.line_to(startX, self.area['ymax'])                  # bottom startX
+      self.ctx.line_to(self.area['xmax'], self.area['ymax'])  # bottom right
+      self.ctx.line_to(self.area['xmax'], self.area['ymin'])  # top right
+      self.ctx.line_to(self.area['xmin'], self.area['ymin'])  # top left
+      self.ctx.line_to(self.area['xmin'], self.area['ymax'])  # bottom left
+      self.ctx.line_to(startX, self.area['ymax'])             # bottom startX
+    else:
+      self.ctx.append_path(pattern)
+      self.ctx.line_to(x, self.getYCoord(0.0))                  # zero-Y endX
+      self.ctx.line_to(startX, self.getYCoord(0.0))                  # zero-Y startX
+      self.ctx.line_to(startX, self.area['ymin'])                  # top startX
+      self.ctx.line_to(self.area['xmax'], self.area['ymin'])  # top right
+      self.ctx.line_to(self.area['xmax'], self.area['ymax'])  # bottom right
+      self.ctx.line_to(self.area['xmin'], self.area['ymax'])  # bottom left
+      self.ctx.line_to(self.area['xmin'], self.area['ymin'])  # top left
+      self.ctx.line_to(startX, self.area['ymin'])             # top startX
     self.ctx.close_path()
     self.ctx.clip()
 
@@ -1486,6 +1504,7 @@ class PieGraph(Graph):
 
     if not params.get('hideLegend',False):
       elements = [ (slice['name'],slice['color'],None) for slice in self.slices ]
+      elements.extend([(name, 'white', None) for name in self.totalsLegend])
       self.drawLegend(elements)
 
     self.drawSlices()

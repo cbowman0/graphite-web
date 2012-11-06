@@ -16,7 +16,7 @@ var dashboardURL;
 var refreshTask;
 var spacer;
 var justClosedGraph = false;
-var NOT_EDITABLE = ['from', 'until', 'width', 'height', 'target', 'uniq', '_uniq'];
+var NOT_EDITABLE = ['from', 'until', 'width', 'height', 'target', 'uniq', '_uniq', 'params'];
 var editor = null;
 
 var cookieProvider = new Ext.state.CookieProvider({
@@ -25,7 +25,16 @@ var cookieProvider = new Ext.state.CookieProvider({
 
 var NAV_BAR_REGION = cookieProvider.get('navbar-region') || 'north';
 
+var RENDER_ENGINE = cookieProvider.get('render-engine') || 'cairo';
+
 var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') != 'false';
+
+
+if ("onhashchange" in window) // does the browser support the hashchange event?
+  window.onhashchange = function () {
+    location.reload();
+  }
+
 
 /* Nav Bar configuration */
 var navBarNorthConfig = {
@@ -85,7 +94,6 @@ var GraphRecord = new Ext.data.Record.create([
   {name: 'height', type: 'auto'}
 ]);
 
-var graphStore;
 function graphStoreUpdated() {
   if (metricSelectorGrid) metricSelectorGrid.getView().refresh();
 }
@@ -114,7 +122,6 @@ if (sessionDefaultParamsJson && sessionDefaultParamsJson.length > 0) {
 } else {
   defaultGraphParams = Ext.apply({}, originalDefaultGraphParams);
 }
-
 
 function initDashboard () {
 
@@ -346,17 +353,48 @@ function initDashboard () {
     store.load();
   });
 
-  var graphTemplate = new Ext.XTemplate(
+  var graphTemplate;
+
+  if (RENDER_ENGINE == 'cairo') {
+    graphTemplate = new Ext.XTemplate(
+      '<tpl for=".">',
+        '<div class="graph-container">',
+          '<div class="graph-overlay">',
+            '<img class="graph-img" src="{url}" width="{width}" height="{height}">',
+            '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); updateGraphRecords(); justClosedGraph = true;">X</div>',
+          '</div>',
+        '</div>',
+      '</tpl>',
+      '<div class="x-clear"></div>'
+    );
+  } else {
+    graphTemplate = new Ext.XTemplate(
     '<tpl for=".">',
       '<div class="graph-container">',
         '<div class="graph-overlay">',
-          '<img class="graph-img" src="{url}" width="{width}" height="{height}">',
-          '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); updateGraphRecords(); justClosedGraph = true;">X</div>',
+
+   '<div class="graphite{index}" style="visibility:visible">',
+   '    <div id="main">',
+   '        <div id="canvas" style="padding:0px; margin: 4px;">',
+   '            <div id="graphcontainer" style=float:left;">',
+   '                <div id="graph{index}" style="width:{width}; height:{height};"></div>',
+   '            </div>',
+   '            <div id="side" style="float:left;">',
+   '                <p id="legend" style="margin-left:0px"></p>',
+   '            </div>',
+   '        </div>',
+   '    </div>',
+   '</div>',
+          '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); refreshGraphs(); justClosedGraph = true;">X</div>',
         '</div>',
       '</div>',
+
+
     '</tpl>',
     '<div class="x-clear"></div>'
-  );
+    );
+
+  }
 
   function setupGraphDD () {
     graphView.dragZone = new Ext.dd.DragZone(graphView.getEl(), {
@@ -444,7 +482,11 @@ function initDashboard () {
         if (this.dropAction == 'reorder') {
           graphStore.removeAt(dragIndex);
           graphStore.insert(dropIndex, data.draggedRecord);
-          updateGraphRecords();
+          if ( RENDER_ENGINE == 'cairo' ) {
+              updateGraphRecords();
+          } else {
+              refreshGraphs();
+          }
           return true;
         } else if (this.dropAction == 'merge') {
           var dragRecord = data.draggedRecord;
@@ -460,7 +502,11 @@ function initDashboard () {
           dropRecord.data.target = Ext.urlEncode({target: mergedTargets});
           dropRecord.commit();
           graphStore.remove(dragRecord);
-          updateGraphRecords();
+          if ( RENDER_ENGINE == 'cairo' ) {
+              updateGraphRecords();
+          } else {
+              refreshGraphs();
+          }
           return true;
         }
         return false;
@@ -488,6 +534,13 @@ function initDashboard () {
   });
 
   /* Toolbar items */
+  var paramValues = {
+          text: "Params",
+          tooltip: 'Set variable parameters',
+          handler: selectParamValues,
+          scope: this
+  };
+
   var relativeTimeRange = {
           icon: CLOCK_ICON,
           text: "Relative Time Range",
@@ -581,6 +634,9 @@ function initDashboard () {
           }
         },
         {
+          text: "Edit Default Render Engine",
+          handler: editDefaultRenderEngine
+        }, {
           text: "Edit Default Parameters",
           handler: editDefaultGraphParameters
         }, {
@@ -689,6 +745,7 @@ function initDashboard () {
       items: [
         dashboardMenu,
         graphsMenu,
+        paramValues,
         '-',
         shareButton,
         '-',
@@ -953,14 +1010,24 @@ function graphAreaToggle(target, options) {
     }
     Ext.apply(urlParams, GraphSize);
     Ext.apply(urlParams, myParams);
+    myParams['from'] = urlParams.from;
+    myParams['until'] = urlParams.until;
 
     var record = new GraphRecord({
       target: graphTargetString,
       params: myParams,
-      url: '/render?' + Ext.urlEncode(urlParams)
+      url: '/render?' + Ext.urlEncode(urlParams),
+      'width': GraphSize.width,
+      'height': GraphSize.height,
+      'name': this.storeId,
     });
     graphStore.add([record]);
+    canvasId = graphStore.indexOf(record);
+    graphStore.getAt(canvasId).data.index = canvasId;
     updateGraphRecords();
+    if (RENDER_ENGINE != 'cairo') {
+      $(".graphite" + canvasId).graphiteGraph("#graph" + canvasId, "", graphTargetList, urlParams.from, urlParams.until, Boolean(myParams.areaMode));
+    }
   }
 }
 
@@ -1000,9 +1067,13 @@ function importGraphUrl(targetUrl, options) {
     var record = new GraphRecord({
       target: graphTargetString,
       params: params,
-      url: '/render?' + Ext.urlEncode(urlParams)
+      url: '/render?' + Ext.urlEncode(urlParams),
+      'width': GraphSize.width,
+      'height': GraphSize.height,
       });
       graphStore.add([record]);
+      canvasId = graphStore.indexOf(record);
+      graphStore.getAt(canvasId).data.index = canvasId;
       updateGraphRecords();
   }
 }
@@ -1030,6 +1101,22 @@ function updateGraphRecords() {
 function refreshGraphs() {
   updateGraphRecords();
   graphView.refresh();
+
+  if (RENDER_ENGINE != 'cairo') {
+    graphStore.each(function () {
+      var graphTargetString = this.data.target;
+      if (this.data.target.substr(0,7) == "target=") {
+        graphTargetString = this.data.target;
+      } else {
+        graphTargetString = "target=" + this.data.target;
+      }
+      var graphTargetList = Ext.urlDecode(graphTargetString)['target'];
+      if (typeof graphTargetList == 'string') {
+        graphTargetList = [graphTargetList];
+      }
+      $(".graphite" + this.data.index).graphiteGraph("#graph" + this.data.index, "", graphTargetList, this.data.params.from, this.data.params.until, Boolean(this.data.params.areaMode));
+    });
+  }
   graphArea.getTopToolbar().get('last-refreshed-text').setText( (new Date()).format('g:i:s A') );
 }
 
@@ -1239,6 +1326,97 @@ function selectRelativeTime() {
   win.show();
 }
 
+function selectParamValues() {
+  savedParams = Ext.decode(defaultGraphParams['params']);
+  paramVars = [];
+  if(!savedParams) {
+    savedParams = {};
+  }
+  urlparts = window.location.href.split('#');
+  // If URL contains params, warn that dashboard is gonna be saved
+  if(urlparts[0].split('?')[1]) {
+    paramVars = [{
+      xtype:'panel',
+      title:'Current dashboard will be saved before applying parameters',
+    }];
+  };
+  seenParams = {};
+  thereAreParams = false;
+  graphStore.each(function (item, index) {
+    for (var i = 0; i < item.data.params.target.length; i++) {
+      target = item.data.params.target[i];
+      target = target.split('/');
+      for (var t = 0; t < target.length; t++ ) {
+        if( t % 3 == 2 ) {
+          param = target[t];
+          if( ! seenParams[param] ) {
+            var paramField = new Ext.form.TextField({
+              fieldLabel: param,
+              width: 90,
+              xtype: 'text',
+              allowBlank: true,
+              value: savedParams[param],
+            });
+            paramVars.push(paramField);
+            seenParams[param] = true;
+            thereAreParams = true;
+          }
+        }
+      }
+    }
+  });
+  if(!thereAreParams) {
+    paramVars = [{
+      xtype:'panel',
+      title:'None of graph targets contain parameters. Parameter format example: target.path/default_value/var_name/target.path',
+    }];
+  }
+  var win;
+
+  function updateParamVars() {
+    params = {};
+    for (var i = 0; i < paramVars.length; i++) {
+      paramField = paramVars[i];
+   console.info(paramField);
+      if(paramField['xtype'] == 'text') {
+        val = paramField.getValue();
+        param = paramField.fieldLabel;
+        if(val) {
+          params[param] = val;
+        }
+      }
+    }
+    defaultGraphParams['params'] = JSON.stringify(params);
+    dashboardURL = Ext.urlAppend(urlparts[0].split('?')[0], 'params='+defaultGraphParams['params']) + '#'+urlparts[1];
+    // If dashboard URL contains params - update them, otherwise just update the state
+    if(urlparts[0].split('?')[1]) {
+      // Save dashboard as changing location will reload it
+      sendSaveRequest(dashboardName, dashboardURL);
+    }
+    win.close();
+    refreshGraphs();
+  }
+
+  win = new Ext.Window({
+    title: "Set target parameters",
+    width: 305,
+    resizable: true,
+    modal: true,
+    layout: 'form',
+    labelAlign: 'right',
+    labelWidth: 90,
+    items: paramVars,
+    buttonAlign: 'center',
+    buttons: [
+      {text: 'Ok', handler: updateParamVars},
+      {text: 'Cancel', handler: function () { win.close(); } }
+    ]
+  });
+  win.show();
+}
+
+
+
 function selectAbsoluteTime() {
   var startDateField = new Ext.form.DateField({
     fieldLabel: 'Start Date',
@@ -1320,13 +1498,19 @@ function newEmptyGraph() {
   Ext.apply(urlParams, defaultGraphParams);
   Ext.apply(urlParams, myParams);
   Ext.apply(urlParams, GraphSize);
+  myParams['from'] = urlParams.from;
+  myParams['until'] = urlParams.until;
 
   var record = new GraphRecord({
    target: graphTargetString,
     params: myParams,
-    url: '/render?' + Ext.urlEncode(urlParams)
+    url: '/render?' + Ext.urlEncode(urlParams),
+   'width': GraphSize.width,
+   'height': GraphSize.height,
     });
   graphStore.add([record]);
+  canvasId = graphStore.indexOf(record);
+  graphStore.getAt(canvasId).data.index = canvasId;
   updateGraphRecords();
 }
 
@@ -1580,6 +1764,70 @@ function editDefaultGraphParameters() {
   win.show();
 }
 
+function updateRenderEngine(engine) {
+  if (engine == RENDER_ENGINE) {
+    return;
+  }
+
+  cookieProvider.set('render-engine', engine);
+  RENDER_ENGINE = engine;
+
+  if (graphStore.getCount() == 0) {
+    window.location.reload()
+  } else {
+    Ext.Msg.alert('Cookie Updated', "You must refresh the page to update the render engine.");
+    //TODO prompt the user to save their dashboard and refresh for them
+  }
+}
+
+
+function editDefaultRenderEngine() {
+
+  function applyRenderEngineChange() {
+    if (Ext.getCmp('cairo-radio').getValue()) {
+      updateRenderEngine('cairo');
+    } else {
+      updateRenderEngine('flot');
+    }
+    configure_re_win.close();
+    configure_re_win = null;
+  }
+
+  configure_re_win = new Ext.Window({
+    title: "Configure Render Engine",
+    layout: 'form',
+    width: 350,
+    height: 125,
+    labelWidth: 140,
+    labelAlign: 'right',
+    items: [
+      {
+        id: 'cairo-radio',
+        xtype: "radio",
+        fieldLabel: "Cairo",
+        boxLabel: "Cairo",
+        name: "render-engine",
+        inputValue: "cairo",
+        checked: (RENDER_ENGINE == 'cairo')
+      }, {
+        id: 'flot-top-radio',
+        xtype: "radio",
+        fieldLabel: "",
+        boxLabel: "Flot Render Engine",
+        name: "render-engine",
+        inputValue: "flot",
+        checked: (RENDER_ENGINE == 'flot')
+      }
+    ],
+    buttons: [
+      {text: 'Ok', handler: applyRenderEngineChange},
+      {text: 'Cancel', handler: function () { configure_re_win.close(); configure_re_win = null; } }
+    ]
+  });
+  configure_re_win.show();
+}
+
+
 function selectGraphSize() {
   var presetCombo = new Ext.form.ComboBox({
     fieldLabel: "Preset",
@@ -1795,7 +2043,6 @@ function graphClicked(graphView, graphIndex, element, evt) {
     activeMenu = null;
     return;
   }
-
   selectedRecord = record; // global state hack for graph options API
 
   var menu;
@@ -1805,7 +2052,6 @@ function graphClicked(graphView, graphIndex, element, evt) {
     if (e.getKey() != e.ENTER) {
       return;
     }
-
     var targets = [];
     Ext.each(menuItems, function (field) {
       if ((!field.getXType) || field.getXType() != 'textfield') {
@@ -1826,6 +2072,15 @@ function graphClicked(graphView, graphIndex, element, evt) {
     menu.destroy();
   }
 
+  function syncGraphs(thisStore, record, operation) {
+    var targets = [];
+    thisStore.each(function (rec) { targets.push(rec.data.target.replace(/'/g, '"')); });
+    selectedRecord.data.params.target = targets;
+    selectedRecord.data.target = Ext.urlEncode({target: targets});
+    refreshGraphs();
+  }
+
+
   /* Inline store definition hackery*/
   var functionsButton;
   var targets = record.data.params.target;
@@ -1834,20 +2089,9 @@ function graphClicked(graphView, graphIndex, element, evt) {
     fields: ['target'],
     data: targets,
     listeners: {
-      update: function (thisStore, record, operation) {
-        var targets = [];
-        thisStore.each(function (rec) { targets.push(rec.data.target); });
-        selectedRecord.data.params.target = targets;
-        selectedRecord.data.target = Ext.urlEncode({target: targets});
-        refreshGraphs();
-      },
-      remove: function (thisStore, record, operation) {
-        var targets = [];
-        thisStore.each(function (rec) { targets.push(rec.data.target); });
-        selectedRecord.data.params.target = targets;
-        selectedRecord.data.target = Ext.urlEncode({target: targets});
-        refreshGraphs();
-      }
+      update: syncGraphs,
+      remove: syncGraphs,
+      add: syncGraphs,
     }
   });
 
@@ -1855,7 +2099,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
   var rowHeight = 21;
   var maxRows = 6;
   var frameHeight = 5;
-  var gridWidth = (buttonWidth * 3) + (buttonWidth / 2) + 2;
+  var gridWidth = (buttonWidth * 4) + 2;
   var gridHeight = (rowHeight * Math.min(targets.length, maxRows)) + frameHeight;
 
   targetGrid = new Ext.grid.EditorGridPanel({
@@ -1875,8 +2119,46 @@ function graphClicked(graphView, graphIndex, element, evt) {
           id: 'target',
           header: 'Target',
           dataIndex: 'target',
-          width: gridWidth - 30,
+          width: gridWidth - 90,
           editor: {xtype: 'textfield'}
+        },
+        {
+            xtype: 'actioncolumn',
+            width: 30,
+            sortable: false,
+            items: [{
+                icon: '/content/img/move_up.png',
+                tooltip: 'Move Up',
+                handler: function(grid, rowIndex, colIndex) {
+                    var record = targetStore.getAt(rowIndex);
+                    var target = record.data.target;
+                    targetStore.remove(record);
+                    if(rowIndex > 0) {
+                        targetStore.insert(rowIndex-1, record);
+                    } else {
+                        targetStore.add(record);
+                    }
+                }
+            }]
+        },
+        {
+            xtype: 'actioncolumn',
+            width: 30,
+            sortable: false,
+            items: [{
+                icon: '/content/img/move_down.png',
+                tooltip: 'Move Down',
+                handler: function(grid, rowIndex, colIndex) {
+                    var record = targetStore.getAt(rowIndex);
+                    var target = record.data.target;
+                    targetStore.remove(record);
+                    if(rowIndex < targetStore.getTotalCount()-1) {
+                        targetStore.insert(rowIndex+1, record);
+                    } else {
+                        targetStore.insert(0, record);
+                    }
+                }
+            }]
         },
         {
             xtype: 'actioncolumn',
@@ -1892,7 +2174,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
                     targets.remove(target);
                 }
             }]
-        }
+        },
       ]
     }),
     selModel: new Ext.grid.RowSelectionModel({
@@ -2040,7 +2322,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
   buttons.push({
       xtype: 'button',
       text: 'Add Target',
-      width: buttonWidth/2,
+      width: buttonWidth,
       handler: function() {
                  // Hide the other menus
                  operationsMenu.hide();
@@ -2501,11 +2783,12 @@ function saveDashboard() {
 
 function saveTemplate() {
   var nameField = new Ext.form.TextField({
-    id: 'name-field',
+    id: 'dashboard-save-template-name',
     fieldLabel: "Template Name",
     width: 240,
     allowBlank: false,
     align: 'center',
+    value: dashboardName ? dashboardName.split('/')[0]: '',
   });
 
   var win;
@@ -2516,7 +2799,7 @@ function saveTemplate() {
   }
 
   win = new Ext.Window({
-    title: "Change Graph Size",
+    title: "Save dashboard as a template",
     width: 400,
     height: 100,
     resizable: false,
@@ -2550,7 +2833,7 @@ function sendSaveTemplateRequest(name) {
   });
 }
 
-function sendSaveRequest(name) {
+function sendSaveRequest(name, newURL) {
   Ext.Ajax.request({
     url: "/dashboard/save/" + name,
     method: 'POST',
@@ -2562,30 +2845,46 @@ function sendSaveRequest(name) {
                if (result.error) {
                  Ext.Msg.alert("Error", "There was an error saving this dashboard: " + result.error);
                }
-             },
-    failure: failedAjaxCall
-  });
-}
-
-function sendLoadRequest(name) {
-  Ext.Ajax.request({
-    url: "/dashboard/load/" + name,
-    success: function (response) {
-               var result = Ext.decode(response.responseText);
-               if (result.error) {
-                 Ext.Msg.alert("Error Loading Dashboard", result.error);
+               if(newURL) {
+                 window.location = newURL;
                } else {
-                 applyState(result.state);
+                 window.location.hash = name;
                }
              },
     failure: failedAjaxCall
   });
 }
 
+function sendLoadRequest(name, reset_params) {
+  urlparts = window.location.href.split('#')
+  if(reset_params && urlparts[0].split('?')[1]) {
+    new_location = urlparts[0].split('?')[0] + '#'+name;
+    window.location.href = new_location;
+  } else {
+    Ext.Ajax.request({
+      url: "/dashboard/load/" + name,
+      success: function (response) {
+                 var result = Ext.decode(response.responseText);
+                 if (result.error) {
+                   Ext.Msg.alert("Error Loading Dashboard", result.error);
+                 } else {
+                   applyState(result.state);
+                 }
+               },
+      failure: failedAjaxCall
+    });
+  }
+}
+
 function sendLoadTemplateRequest(name, host_id) {
-  Ext.Ajax.request({
-    url: "/dashboard/load_template/" + name + "/" + host_id,
-    success: function (response) {
+  urlparts = window.location.href.split('#')
+  if(urlparts[0].split('?')[1]) {
+    new_location = urlparts[0].split('?')[0] + '#'+name+'/'+host_id;
+    window.location.href = new_location;
+  } else {
+    Ext.Ajax.request({
+      url: "/dashboard/load_template/" + name + "/" + host_id,
+      success: function (response) {
                var result = Ext.decode(response.responseText);
                if (result.error) {
                  Ext.Msg.alert("Error Loading Template", result.error);
@@ -2593,8 +2892,9 @@ function sendLoadTemplateRequest(name, host_id) {
                  applyState(result.state);
                }
              },
-    failure: failedAjaxCall
-  });
+      failure: failedAjaxCall
+    });
+  }
 }
 
 function getState() {
@@ -2661,11 +2961,23 @@ function applyState(state) {
 
   //state.defaultGraphParams = {...}
   defaultGraphParams = state.defaultGraphParams || originalDefaultGraphParams;
-
+  param_vars = Ext.urlDecode(window.location.search.substring(1))['params'];
+  if(param_vars) {
+    defaultGraphParams['params'] = param_vars;
+  } else {
+    if(defaultGraphParams['params']) {
+      urlparts = window.location.href.split('#')
+      new_location = Ext.urlAppend(urlparts[0], 'params='+defaultGraphParams['params']) + '#'+state.name;
+      window.location.href = new_location;
+    }
+  }
   //state.graphs = [ [id, target, params, url], ... ]
   graphStore.loadData(state.graphs);
 
   refreshGraphs();
+  if(defaultGraphParams['params']) {
+    dashboardURL = Ext.urlAppend(dashboardURL, 'params='+defaultGraphParams['params']);
+  }
 }
 
 function deleteDashboard(name) {
@@ -2710,7 +3022,7 @@ function setDashboardName(name) {
     saveButton.setText("Save");
     saveButton.disable();
   } else {
-    var urlparts = location.href.split('#')[0].split('/');
+    var urlparts = location.href.split('#')[0].split('?')[0].split('/');
     var i = urlparts.indexOf('dashboard');
     if (i == -1) {
       Ext.Msg.alert("Error", "urlparts = " + Ext.encode(urlparts) + " and indexOf(dashboard) = " + i);
@@ -2721,7 +3033,7 @@ function setDashboardName(name) {
     dashboardURL = urlparts.join('/');
 
     document.title = name + " - Graphite Dashboard";
-    window.location.hash = name;
+
     navBar.setTitle(name + " - (" + dashboardURL + ")");
     saveButton.setText('Save "' + name + '"');
     saveButton.enable();
@@ -2730,6 +3042,7 @@ function setDashboardName(name) {
 }
 
 function failedAjaxCall(response, options) {
+  console.info("Ajax call failed, response was :" + response.responseText);
   Ext.Msg.alert(
     "Ajax Error",
     "Ajax call failed, response was :" + response.responseText
@@ -2915,7 +3228,7 @@ function showTemplateFinder() {
     listeners: {
       keyup: function (field, e) {
                   if (e.getKey() == e.ENTER) {
-                    sendLoadRequest(field.getValue());
+                    sendLoadRequest(field.getValue(), reset_params=true);
                     win.close();
                   } else {
                     queryUpdateTask.delay(FINDER_QUERY_DELAY);
@@ -2926,7 +3239,6 @@ function showTemplateFinder() {
 
   hostidField = new Ext.form.ComboBox({
     id: 'hostid-field',
-
     triggerAction:'all',
     typeAhead:false,
     mode:'remote',
@@ -2936,10 +3248,18 @@ function showTemplateFinder() {
     store: hostidsStore,
     valueField: 'path',
     displayField: 'path',
-
     allowBlank: false,
     region: 'north',
     emptyText: "apply to the host",
+    listeners: {
+        select: function(combo, record, index) {
+            if( record && templatesList.getSelectedRecords().length > 0 ) {
+                Ext.getCmp('finder-open-button').enable();
+            } else {
+                Ext.getCmp('finder-open-button').disable();
+            };
+        }
+    },
   });
 
   win = new Ext.Window({
@@ -2996,7 +3316,7 @@ function showDashboardFinder() {
   function openSelected() {
     var selected = dashboardsList.getSelectedRecords();
     if (selected.length > 0) {
-      sendLoadRequest(selected[0].data.name);
+      sendLoadRequest(selected[0].data.name, reset_params=true);
     }
     win.close();
   }
@@ -3041,7 +3361,7 @@ function showDashboardFinder() {
 
       dblclick: function (listView, index, node, e) {
                   var record = dashboardsStore.getAt(index);
-                  sendLoadRequest(record.data.name);
+                  sendLoadRequest(record.data.name, reset_params=true);
                   win.close();
                 }
     },
@@ -3071,7 +3391,7 @@ function showDashboardFinder() {
     listeners: {
       keyup: function (field, e) {
                   if (e.getKey() == e.ENTER) {
-                    sendLoadRequest(field.getValue());
+                    sendLoadRequest(field.getValue(), reset_params=true);
                     win.close();
                   } else {
                     queryUpdateTask.delay(FINDER_QUERY_DELAY);

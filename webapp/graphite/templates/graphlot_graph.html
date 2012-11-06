@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <title>Graphlot</title>
+    <script type="text/javascript" src="../../content/js/jquery.js"></script>
+    <script type="text/javascript" src="../../content/js/jquery.flot.js"></script>
+    <script type="text/javascript" src="../../content/js/jquery.autocomplete.js"></script>
+    <script type="text/javascript" src="../../content/js/jquery.flot.selection.js"></script>
+    <script type="text/javascript" src="../../content/js/jquery.flot.crosshair.js"></script>
+    <script type="text/javascript" src="../../content/js/jquery.graphite-dashboard.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="../../content/css/jquery.autocomplete.css" />
+    <link rel="stylesheet" type="text/css" href="../../content/css/table.css" />
+    
+    <script type="text/javascript">
+
+    var SLASH='{{slash}}';
+
+
+    var graph1_metrics = Array();
+    {% for metric in metric_list %}
+    graph1_metrics.push('{{metric.name}}');
+    {% endfor %}
+
+
+    var graph2_metrics = Array();
+    graph2_metrics.push('instances.prod.bidderc.*.33{1,2,3}.app.last_batch_age_max');
+
+    $(document).ready(function () {
+        $('.graphite1').graphiteGraph('#graph1', '', graph1_metrics, '{{fromtime}}', '{{untiltime}}');
+    });
+
+    </script>
+
+
+    <style type="text/css">
+    body {
+        font-family: sans-serif;
+        font-size: 16px;
+        margin: 0px;
+    }
+
+    .ajaxerror {
+        background: #ff0000;
+    }
+    .ajaxworking {
+        background: #0000ff;
+    }
+    </style>
+
+
+    </head>
+    <body>
+        <div class="graphite1">
+            <div id="main" >
+                <div id="canvas" style="padding:0px; margin: 4px;">
+                    <div id="graphcontainer" style=float:left;">
+                        <div id="graph1" style="width:{{width}}px;height:{{height}}px"></div>
+<!--                        <div id="graph1_overview" style="width:{{width}}px;height:66px"></div> -->
+                    </div>
+                    <div id="side" style="float:left">
+                        <p id="legend" style="margin-left:0px"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+

@@ -33,11 +33,11 @@ def hashRequest(request):
   return compactHash(myHash)
 
 
-def hashData(targets, startTime, endTime):
+def hashData(targets, startTime, endTime, extra_options=None):
   targetsString = ','.join(targets)
   startTimeString = startTime.strftime("%Y%m%d_%H%M")
   endTimeString = endTime.strftime("%Y%m%d_%H%M")
-  myHash = targetsString + '@' + startTimeString + ':' + endTimeString
+  myHash = targetsString + '@' + startTimeString + ':' + endTimeString + '--' + str(extra_options)
   myHash = stripControlChars(myHash)
 
   return compactHash(myHash)
