@@ -383,7 +383,7 @@ def percentileOfSeries(requestContext, seriesList, n, interpolate=False):
   if n <= 0:
     raise ValueError('The requested percent is required to be greater than 0')
 
-  name = 'percentilesOfSeries(%s, %.1f)' % (seriesList[0].pathExpression, n)
+  name = 'percentilesOfSeries(%s,%g)' % (seriesList[0].pathExpression, n)
   (start, end, step) = normalize([seriesList])[1:]
   values = [ _getPercentile(row, n, interpolate) for row in izip(*seriesList) ]
   resultSeries = TimeSeries(name, start, end, step, values)
@@ -391,9 +391,9 @@ def percentileOfSeries(requestContext, seriesList, n, interpolate=False):
 
   return [resultSeries]
 
-def keepLastValue(requestContext, seriesList):
+def keepLastValue(requestContext, seriesList, limit = INF):
   """
-  Takes one metric or a wildcard seriesList.
+  Takes one metric or a wildcard seriesList, and optionally a limit to the number of 'None' values to skip over.
   Continues the line with the last received value when gaps ('None' values) appear in your data, rather than breaking your line.
 
   Example:
@@ -401,15 +401,37 @@ def keepLastValue(requestContext, seriesList):
   .. code-block:: none
 
     &target=keepLastValue(Server01.connections.handled)
+    &target=keepLastValue(Server01.connections.handled, 10)
 
   """
   for series in seriesList:
     series.name = "keepLastValue(%s)" % (series.name)
     series.pathExpression = series.name
+    consecutiveNones = 0
     for i,value in enumerate(series):
-      if value is None and i != 0:
-        value = series[i-1]
       series[i] = value
+
+      # No 'keeping' can be done on the first value because we have no idea
+      # what came before it.
+      if i == 0:
+         continue
+
+      if value is None:
+        consecutiveNones += 1
+      else:
+         if 0 < consecutiveNones <= limit:
+           # If a non-None value is seen before the limit of Nones is hit,
+           # backfill all the missing datapoints with the last known value.
+           for index in xrange(i - consecutiveNones, i):
+             series[index] = series[i - consecutiveNones - 1]
+
+         consecutiveNones = 0
+
+    # If the series ends with some None values, try to backfill a bit to cover it.
+    if 0 < consecutiveNones < limit:
+      for index in xrange(len(series) - consecutiveNones, len(series)):
+        series[index] = series[len(series) - consecutiveNones - 1]
+      
   return seriesList
 
 def asPercent(requestContext, seriesList, seriesList2orNumber=None):
@@ -568,7 +590,7 @@ def movingMedian(requestContext, seriesList, windowSize):
     if type(windowSize) is str:
       newName = 'movingMedian(%s,"%s")' % (series.name, windowSize)
     else:
-      newName = "movingMedian(%s,%s)" % (series.name, windowSize)
+      newName = "movingMedian(%s,%d)" % (series.name, windowPoints)
     newSeries = TimeSeries(newName, series.start, series.end, series.step, [])
     newSeries.pathExpression = newName
 
@@ -603,7 +625,7 @@ def scale(requestContext, seriesList, factor):
 
   """
   for series in seriesList:
-    series.name = "scale(%s,%.1f)" % (series.name,float(factor))
+    series.name = "scale(%s,%g)" % (series.name,float(factor))
     for i,value in enumerate(series):
       series[i] = safeMul(value,factor)
   return seriesList
@@ -672,7 +694,7 @@ def offset(requestContext, seriesList, factor):
 
   """
   for series in seriesList:
-    series.name = "offset(%s,%.1f)" % (series.name,float(factor))
+    series.name = "offset(%s,%g)" % (series.name,float(factor))
     for i,value in enumerate(series):
       if value is not None:
         series[i] = value + factor
@@ -1495,7 +1517,7 @@ def nPercentile(requestContext, seriesList, n):
 
     perc_val = _getPercentile(s_copy, n)
     if perc_val:
-      name = 'nPercentile(%.1f, %s)' % (n, s_copy.name)
+      name = 'nPercentile(%g,%s)' % (n, s_copy.name)
       point_count = int((s.end - s.start)/s.step)
       perc_series = TimeSeries(name, s_copy.start, s_copy.end, s_copy.step, [perc_val] * point_count )
       perc_series.pathExpression = name
@@ -1688,8 +1710,8 @@ def stdev(requestContext, seriesList, points, windowTolerance=0.1):
   # For this we take the standard deviation in terms of the moving average
   # and the moving average of series squares.
   for (seriesIndex,series) in enumerate(seriesList):
-    stddevSeries = TimeSeries("stddev(%s,%.1f)" % (series.name, float(points)), series.start, series.end, series.step, [])
-    stddevSeries.pathExpression = "stddev(%s,%.1f)" % (series.name, float(points))
+    stddevSeries = TimeSeries("stddev(%s,%d)" % (series.name, int(points)), series.start, series.end, series.step, [])
+    stddevSeries.pathExpression = "stddev(%s,%d)" % (series.name, int(points))
 
     validPoints = 0
     currentSum = 0
@@ -2191,12 +2213,40 @@ def transformNull(requestContext, seriesList, default=0):
     else: return v
 
   for series in seriesList:
-    series.name = "transformNull(%s, %.2f)" % (series.name, default)
+    series.name = "transformNull(%s,%g)" % (series.name, default)
     series.pathExpression = series.name
     values = [transform(v) for v in series]
     series.extend(values)
     del series[:len(values)]
   return seriesList
+
+
+def identity(requestContext, name):
+  """
+  Identity function:
+  Returns datapoints where the value equals the timestamp of the datapoint.
+  Useful when you have another series where the value is a timestamp, and
+  you want to compare it to the time of the datapoint, to render an age
+  
+  Example:
+
+  .. code-block:: none
+
+    &target=identity("The.time.series")
+
+  This would create a series named "The.time.series" that contains points where
+  x(t) == t.
+  """
+  step = 60
+  delta = timedelta(seconds=step)
+  start = time.mktime(requestContext["startTime"].timetuple())
+  end = time.mktime(requestContext["endTime"].timetuple())
+  values = range(start, end, step)
+  series = TimeSeries(name, start, end, step, values)
+  series.pathExpression = 'identity("%s")' % name
+
+  return [series]
+
 
 def countSeries(requestContext, *seriesLists):
   """
@@ -2553,11 +2603,13 @@ def timeFunction(requestContext, name):
     values.append(time.mktime(when.timetuple()))
     when += delta
 
-  return [TimeSeries(name,
+  series = TimeSeries(name,
             time.mktime(requestContext["startTime"].timetuple()),
             time.mktime(requestContext["endTime"].timetuple()),
-            step, values)]
+            step, values)
+  series.pathExpression = name
 
+  return [series]
 
 def sinFunction(requestContext, name, amplitude=1):
   """
@@ -2780,6 +2832,7 @@ SeriesFunctions = {
   'areaBetween' : areaBetween,
   'threshold' : threshold,
   'transformNull' : transformNull,
+  'identity': identity,
 
   # test functions
   'time': timeFunction,
