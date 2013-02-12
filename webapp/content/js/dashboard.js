@@ -3563,7 +3563,6 @@ function applyFuncToAll (funcName) {
       }
     );
     targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
-    addTargetToSelectedGraph(newTarget);
     targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
     refreshGraphs();
   }
@@ -3584,7 +3583,9 @@ function removeOuterCall() { // blatantly repurposed from composer_widgets.js (d
     for (i = 0; i < argString.length; i++) {
       switch (argString.charAt(i)) {
         case '(': depth += 1; break;
+        case '{': depth += 1; break;
         case ')': depth -= 1; break;
+        case '}': depth += 1; break;
         case ',':
           if (depth > 0) { continue; }
           if (depth < 0) { Ext.Msg.alert("Malformed target, cannot remove outer call."); return; }
@@ -3601,7 +3602,6 @@ function removeOuterCall() { // blatantly repurposed from composer_widgets.js (d
     Ext.each(args, function (arg) {
       if (!arg.match(/^([0123456789\.]+|".+")$/)) { //Skip string and number literals
         targetStore.add([ new targetStore.recordType({target: arg}) ]);
-        selectedRecord.data.params.target.push(arg);
         targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', arg), true);
       }
     });
