@@ -44,6 +44,7 @@ function createComposerWindow(myComposer) {
     createToolbarButton('Select a Date Range', 'calBt.gif', toggleWindow(createCalendarWindow) ),
     createToolbarButton('Select Recent Data', 'arrow1.gif', toggleWindow(createRecentWindow) ),
     createToolbarButton('Open in GraphPlot', 'line_chart.png', function() { window.open('/graphlot/?' + Composer.url.queryString,'_blank') }),
+    createToolbarButton('Short URL', 'browser.png', showShortUrl),
     '-',
     timeDisplay
   ];
@@ -257,6 +258,20 @@ function getCalendarSelection(which) {
 
 function asDateString(dateObj) {
   return dateObj.format('H:i_Ymd');
+}
+
+/* Short url window */
+function showShortUrl() {
+    showUrl = function(options, success, response) {
+        if(success) {
+            Ext.MessageBox.alert("Short url", response.responseText);
+        }
+    }
+    Ext.Ajax.request({
+        method: 'GET',
+        url: '/s/render/?' + Composer.url.queryString,
+        callback: showUrl,
+    });
 }
 
 /* "Recent Data" dialog */
