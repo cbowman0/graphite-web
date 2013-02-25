@@ -86,6 +86,7 @@ try:
         'graphite.graphlot',
         'graphite.metrics',
         'graphite.render',
+        'graphite.url_shortener',
         'graphite.version',
         'graphite.whitelist',
       ],
