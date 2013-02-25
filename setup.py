@@ -53,6 +53,7 @@ setup(
     'graphite.dashboard',
     'graphite.graphlot',
     'graphite.events',
+    'graphite.url_shortener',
     'graphite.version',
   ],
   package_data={'graphite' :
