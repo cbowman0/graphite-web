@@ -947,6 +947,43 @@ def nonNegativeDerivative(requestContext, seriesList, maxValue=None):
 
   return results
 
+def totaled(requestContext,seriesLists,stackName='__DEFAULT__'):
+  """ Takes one metric or a wildcard seriesList and an optional name of the
+  totals bucket. It does not add any new graphs or affects existing but
+  calculates total values ('last', 'avg', 'max' etc, for each bucket which
+  can be printed in the graph legend.
+
+  If the same diagram contains stacked graphs make sure you choose different names for
+  stacks and buckets unless you want to sum them up.
+
+  Example:
+
+  .. code-block:: none
+
+    &target=totaled(company.server.application01.ifconfig.TXPackets, 'tx')
+
+  """
+
+  if 'totalStack' in requestContext:
+    totalStack = requestContext['totalStack'].get(stackName, [])
+  else:
+    requestContext['totalStack'] = {}
+    totalStack = [];
+  for series in seriesLists:
+    newValues = []
+    for i in range(len(series)):
+      if len(totalStack) <= i: totalStack.append(0)
+
+      if series[i] is not None and totalStack[i] is not None:
+        totalStack[i] += series[i]
+        newValues.append(totalStack[i])
+      else:
+        totalStack[i] = None
+        newValues.append(None)
+  requestContext['totalStack'][stackName] = totalStack
+  return seriesLists
+
+
 def stacked(requestContext,seriesLists,stackName='__DEFAULT__'):
   """
   Takes one metric or a wildcard seriesList and change them so they are
@@ -2829,6 +2866,7 @@ SeriesFunctions = {
   'groupByNode' : groupByNode,
   'constantLine' : constantLine,
   'stacked' : stacked,
+  'totaled' : totaled,
   'areaBetween' : areaBetween,
   'threshold' : threshold,
   'transformNull' : transformNull,
