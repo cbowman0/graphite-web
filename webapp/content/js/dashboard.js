@@ -2468,21 +2468,21 @@ function mailGraph(record) {
     fieldLabel: "From",
     name: 'sender',
     width: 300,
-    allowBlank: false,
+    allowBlank: false
   });
 
   var toField = new Ext.form.TextField({
     fieldLabel: "To",
     name: 'recipients',
     width: 300,
-    allowBlank: false,
+    allowBlank: false
   });
 
   var subjectField = new Ext.form.TextField({
     fieldLabel: "Subject",
     name: 'subject',
     width: 300,
-    allowBlank: false,
+    allowBlank: false
   });
 
   var msgField = new Ext.form.TextArea({
@@ -2531,7 +2531,7 @@ function mailGraph(record) {
     resizable: true,
     modal: true,
     layout: 'fit',
-    items: [contactForm],
+    items: [contactForm]
   });
   win.show();
 }
@@ -2953,6 +2953,8 @@ function applyState(state) {
   TimeRange.endDate = new Date(timeConfig.endDate);
   TimeRange.endTime = timeConfig.endTime;
   updateTimeText();
+
+
 
   //state.refreshConfig = {enabled, interval}
   var refreshConfig = state.refreshConfig;
