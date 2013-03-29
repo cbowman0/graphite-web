@@ -55,7 +55,7 @@ function createComposerWindow(myComposer) {
 
   var bottomToolbar = [
     { text: "Graph Options", menu: createOptionsMenu() },
-    { text: "Graph Data", handler: toggleWindow(Ext.bind(GraphDataWindow.create, GraphDataWindow)) },
+    { text: "Graph Data", handler: toggleWindow(GraphDataWindow.create.createDelegate(GraphDataWindow)) },
     { text: "Auto-Refresh", id: 'autorefresh_button', enableToggle: true, toggleHandler: toggleAutoRefresh }
   ];
 
