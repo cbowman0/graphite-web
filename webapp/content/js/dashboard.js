@@ -2135,7 +2135,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
   var rowHeight = 21;
   var maxRows = 6;
   var frameHeight = 5;
-  var gridWidth = (buttonWidth * 5) + 2;
+  var gridWidth = (buttonWidth * 4) + 2;
   var gridHeight = (rowHeight * Math.min(targets.length, maxRows)) + frameHeight;
 
   targetGrid = new Ext.grid.EditorGridPanel({
@@ -2365,18 +2365,15 @@ function graphClicked(graphView, graphIndex, element, evt) {
           callback: showUrl,
         });
       }
-    }]
-  });
-
-    var additionalActionsMenu = new Ext.menu.Menu({
-      allowOtherMenus: true,
-      items: [{
+    }, {
         xtype: 'button',
         text: 'History',
         width: 100,
         handler: function () { menu.destroy(); historyGraph(record);}
-      },]
-    });
+      }
+    ]
+  });
+
   var buttons = [functionsButton];
 
   buttons.push({
@@ -2426,21 +2423,6 @@ function graphClicked(graphView, graphIndex, element, evt) {
       }
   });
 
-  buttons.push({
-    xtype: 'button',
-    text: "Cacti",
-    width: buttonWidth,
-    handler: function (thisButton) {
-            if (additionalActionsMenu.isVisible()){
-                additionalActionsMenu.doHide(); // private method... yuck (no other way to hide w/out trigging hide event handler)
-            } else {
-                operationsMenu.hide();
-                functionsMenu.hide();
-                additionalActionsMenu.show(thisButton.getEl());
-            }
-        }
-  });
-
   menuItems.push({
     xtype: 'panel',
     layout: 'hbox',
@@ -2469,7 +2451,6 @@ function graphClicked(graphView, graphIndex, element, evt) {
                        optionsMenu.destroy();
                        operationsMenu.destroy();
                        functionsMenu.destroy();
-                       additionalActionsMenu.destroy();
                      }
   );
 }
@@ -2607,7 +2588,6 @@ function mailGraph(record) {
                url: '/dashboard/email',
                waitMsg: 'Processing Request',
                success: function (contactForm, response) {
-         console.log(response.result);
                  win.close();
                }
              });
@@ -2683,7 +2663,7 @@ function historyGraph(record){
 
     var props = getProps(record);
     var title = '';
-    title = props.params.title;
+    title = (props.params.title != undefined) ? props.params.title : '';
 
     props = getProps(record);
     props.params.title = title + ' 1 hour';
@@ -2730,8 +2710,6 @@ function historyGraph(record){
             params.title = params.target[0];
           }
 
-          console.log(params.title);
-
           if (!params.uniq === undefined) {
               delete params["uniq"];
           }
@@ -2762,7 +2740,6 @@ function historyGraph(record){
       layout: 'fit',
       items: graphHistoryView
     });
-    console.log(record);
     win.show();
 
 }
