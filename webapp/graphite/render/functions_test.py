@@ -7,7 +7,7 @@ settings.configure(
     LOG_CACHE_PERFORMANCE='',
     LOG_RENDERING_PERFORMANCE='',
     LOG_METRIC_ACCESS='',
-    DATA_DIRS='.',
+    STANDARD_DIRS='.',
     CLUSTER_SERVERS='',
     CARBONLINK_HOSTS='',
     CARBONLINK_TIMEOUT=0,
@@ -49,7 +49,7 @@ class FunctionsTest(unittest.TestCase):
 
     def testGetPercentile(self):
       seriesList = [
-        ([15, 20, 35, 40, 50], 20),
+        ([None, None, 15, 20, 35, 40, 50], 20),
         (range(100), 30),
         (range(200), 60),
         (range(300), 90),
@@ -89,6 +89,19 @@ class FunctionsTest(unittest.TestCase):
         TestNPercentile(30, [ [20], [31], [61], [91], [30], [60], [90], [90] ])
         TestNPercentile(90, [ [50], [91], [181], [271], [90], [180], [270], [270] ])
         TestNPercentile(95, [ [50], [96], [191], [286], [95], [190], [285], [285] ])
+
+    def testSortingByTotal(self):
+      seriesList = []
+      config = [[1000, 100, 10, 0], [1000, 100, 10, 1]]
+      for i, c in enumerate(config):
+        seriesList.append( TimeSeries('Test(%d)' % i, 0, 0, 0, c) )
+
+      self.assertEquals(1110, functions.safeSum(seriesList[0]))
+
+      result = functions.sortByTotal({},seriesList)
+
+      self.assertEquals(1111, functions.safeSum(result[0]))
+      self.assertEquals(1110, functions.safeSum(result[1]))
 
 
 if __name__ == '__main__':

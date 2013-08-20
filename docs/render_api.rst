@@ -558,8 +558,8 @@ graphOnly
 
 Display only the graph area with no grid lines, axes, or legend
 
-graphTypes
-----------
+graphType
+---------
 *Default: line*
 
 Sets the type of graph to be rendered. Currently there are only two graph types:
@@ -746,6 +746,11 @@ max
 .. deprecated:: 0.9.0
    See yMax_
 
+maxDataPoints
+-------------
+Set the maximum numbers of datapoints returned when using json content. 
+
+If the number of datapoints in a selected range exceeds the maxDataPoints value then the datapoints over the whole period are consolidated.
 
 .. _param-minorGridLineColor:
 

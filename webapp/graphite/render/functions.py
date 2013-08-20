@@ -22,17 +22,18 @@ import random
 import time
 
 from graphite.logger import log
-from graphite.render.datalib import TimeSeries
 from graphite.render.attime import parseTimeOffset
-from graphite.util import timestamp
 
 from graphite.events import models
+
 #XXX format_units() should go somewhere else
 from os import environ
 if environ.get('READTHEDOCS'):
   format_units = lambda *args, **kwargs: (0,'')
 else:
   from graphite.render.glyph import format_units
+  from graphite.render.datalib import TimeSeries
+  from graphite.util import timestamp
 
 NAN = float('NaN')
 INF = float('inf')
@@ -117,13 +118,17 @@ def safeAbs(value):
   if value is None: return None
   return abs(value)
 
-def lcm(a,b):
+# Greatest common divisor
+def gcd(a, b):
+  if b == 0:
+    return a
+  return gcd(b, a%b)
+
+# Least common multiple
+def lcm(a, b):
   if a == b: return a
-  if a < b: (a,b) = (b,a) #ensure a > b
-  for i in xrange(1,a * b):
-    if a % (b * i) == 0 or (b * i) % a == 0: #probably inefficient
-      return max(a,b * i)
-  return a * b
+  if a < b: (a, b) = (b, a) #ensure a > b
+  return a / gcd(a,b) * b
 
 def normalize(seriesLists):
   seriesList = reduce(lambda L1,L2: L1+L2,seriesLists)
@@ -138,6 +143,12 @@ def normalize(seriesLists):
 def matchSeries(seriesList1, seriesList2):
   assert len(seriesList2) == len(seriesList1), "The number of series in each argument must be the same"
   return izip(sorted(seriesList1, lambda a,b: cmp(a.name, b.name)), sorted(seriesList2, lambda a,b: cmp(a.name, b.name)))
+
+def formatPathExpressions(seriesList):
+   # remove duplicates
+   pathExpressions = []
+   [pathExpressions.append(s.pathExpression) for s in seriesList if not pathExpressions.count(s.pathExpression)]
+   return ','.join(pathExpressions)
 
 # Series Functions
 
@@ -170,8 +181,6 @@ def sumSeries(requestContext, *seriesLists):
     (seriesList,start,end,step) = normalize(seriesLists)
   except:
     return []
-  #name = "sumSeries(%s)" % ','.join((s.name for s in seriesList))
-  name = "sumSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
 
   # trim right side of the graph to avoid dip when only part of most recent metrics has entered the system
   for s in seriesList:
@@ -184,6 +193,8 @@ def sumSeries(requestContext, *seriesLists):
       for sl in seriesList:
         sl[-2] = None
       break
+
+  name = "sumSeries(%s)" % formatPathExpressions(seriesList)
 
   values = ( safeSum(row) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
@@ -267,7 +278,7 @@ def diffSeries(requestContext, *seriesLists):
 
   """
   (seriesList,start,end,step) = normalize(seriesLists)
-  name = "diffSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+  name = "diffSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeDiff(row) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
   series.pathExpression = name
@@ -288,8 +299,7 @@ def averageSeries(requestContext, *seriesLists):
 
   """
   (seriesList,start,end,step) = normalize(seriesLists)
-  #name = "averageSeries(%s)" % ','.join((s.name for s in seriesList))
-  name = "averageSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+  name = "averageSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeDiv(safeSum(row),safeLen(row)) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
   series.pathExpression = name
@@ -309,7 +319,7 @@ def stddevSeries(requestContext, *seriesLists):
 
   """
   (seriesList,start,end,step) = normalize(seriesLists)
-  name = "stddevSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+  name = "stddevSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeStdDev(row) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
   series.pathExpression = name
@@ -327,8 +337,7 @@ def minSeries(requestContext, *seriesLists):
     &target=minSeries(Server*.connections.total)
   """
   (seriesList, start, end, step) = normalize(seriesLists)
-  pathExprs = list( set([s.pathExpression for s in seriesList]) )
-  name = "minSeries(%s)" % ','.join(pathExprs)
+  name = "minSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeMin(row) for row in izip(*seriesList) )
   series = TimeSeries(name, start, end, step, values)
   series.pathExpression = name
@@ -347,8 +356,7 @@ def maxSeries(requestContext, *seriesLists):
 
   """
   (seriesList, start, end, step) = normalize(seriesLists)
-  pathExprs = list( set([s.pathExpression for s in seriesList]) )
-  name = "maxSeries(%s)" % ','.join(pathExprs)
+  name = "maxSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeMax(row) for row in izip(*seriesList) )
   series = TimeSeries(name, start, end, step, values)
   series.pathExpression = name
@@ -367,7 +375,7 @@ def rangeOfSeries(requestContext, *seriesLists):
 
     """
     (seriesList,start,end,step) = normalize(seriesLists)
-    name = "rangeOfSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+    name = "rangeOfSeries(%s)" % formatPathExpressions(seriesList)
     values = ( safeSubtract(max(row), min(row)) for row in izip(*seriesList) )
     series = TimeSeries(name,start,end,step,values)
     series.pathExpression = name
@@ -431,7 +439,7 @@ def keepLastValue(requestContext, seriesList, limit = INF):
     if 0 < consecutiveNones < limit:
       for index in xrange(len(series) - consecutiveNones, len(series)):
         series[index] = series[len(series) - consecutiveNones - 1]
-      
+
   return seriesList
 
 def asPercent(requestContext, seriesList, seriesList2orNumber=None):
@@ -630,6 +638,7 @@ def scale(requestContext, seriesList, factor):
   """
   for series in seriesList:
     series.name = "scale(%s,%g)" % (series.name,float(factor))
+    series.pathExpression = series.name
     for i,value in enumerate(series):
       series[i] = safeMul(value,factor)
   return seriesList
@@ -662,6 +671,7 @@ def scaleToSeconds(requestContext, seriesList, seconds):
 
   for series in seriesList:
     series.name = "scaleToSeconds(%s,%d)" % (series.name,seconds)
+    series.pathExpression = series.name
     for i,value in enumerate(series):
       factor = seconds * 1.0 / series.step
       series[i] = safeMul(value,factor)
@@ -681,6 +691,7 @@ def absolute(requestContext, seriesList):
   """
   for series in seriesList:
     series.name = "absolute(%s)" % (series.name)
+    series.pathExpression = series.name
     for i,value in enumerate(series):
       series[i] = safeAbs(value)
   return seriesList
@@ -699,10 +710,50 @@ def offset(requestContext, seriesList, factor):
   """
   for series in seriesList:
     series.name = "offset(%s,%g)" % (series.name,float(factor))
+    series.pathExpression = series.name
     for i,value in enumerate(series):
       if value is not None:
         series[i] = value + factor
   return seriesList
+
+def offsetToZero(requestContext, seriesList):
+  """
+  Offsets a metric or wildcard seriesList by subtracting the minimum
+  value in the series from each datapoint.
+
+  Useful to compare different series where the values in each series
+  may be higher or lower on average but you're only interested in the
+  relative difference.
+
+  An example use case is for comparing different round trip time
+  results. When measuring RTT (like pinging a server), different
+  devices may come back with consistently different results due to
+  network latency which will be different depending on how many
+  network hops between the probe and the device. To compare different
+  devices in the same graph, the network latency to each has to be
+  factored out of the results. This is a shortcut that takes the
+  fastest response (lowest number in the series) and sets that to zero
+  and then offsets all of the other datapoints in that series by that
+  amount. This makes the assumption that the lowest response is the
+  fastest the device can respond, of course the more datapoints that
+  are in the series the more accurate this assumption is.
+
+  Example:
+  
+  .. code-block:: none
+
+    &target=offsetToZero(Server.instance01.responseTime)
+    &target=offsetToZero(Server.instance*.responseTime)
+
+  """
+  for series in seriesList:
+    series.name = "offsetToZero(%s)" % (series.name)
+    minimum = safeMin(series)
+    for i,value in enumerate(series):
+      if value is not None:
+        series[i] = value - minimum
+  return seriesList
+
 
 def movingAverage(requestContext, seriesList, windowSize):
   """
@@ -798,6 +849,7 @@ def consolidateBy(requestContext, seriesList, consolidationFunc):
     # datalib will throw an exception, so it's not necessary to validate here
     series.consolidationFunc = consolidationFunc
     series.name = 'consolidateBy(%s,"%s")' % (series.name, series.consolidationFunc)
+    series.pathExpression = series.name
   return seriesList
 
 def derivative(requestContext, seriesList):
@@ -1066,8 +1118,11 @@ def aliasSub(requestContext, seriesList, search, replace):
 
     &target=aliasSub(ip.*TCP*,"^.*TCP(\d+)","\\1")
   """
-  for series in seriesList:
-    series.name = re.sub(search, replace, series.name)
+  try:
+    seriesList.name = re.sub(search, replace, seriesList.name)
+  except AttributeError:
+    for series in seriesList:
+      series.name = re.sub(search, replace, series.name)
   return seriesList
 
 
@@ -1081,8 +1136,11 @@ def alias(requestContext, seriesList, newName):
     &target=alias(Sales.widgets.largeBlue,"Large Blue Widgets")
 
   """
-  for series in seriesList:
-    series.name = newName
+  try:
+    seriesList.name = newName
+  except AttributeError:
+    for series in seriesList:
+      series.name = newName
   return seriesList
 
 def cactiStyle(requestContext, seriesList, system=None):
@@ -1117,7 +1175,7 @@ def cactiStyle(requestContext, seriesList, system=None):
         last = NAN
       else:
         last = fmt(float(last))
-        
+
       if maximum is None:
         maximum = NAN
       else:
@@ -1126,7 +1184,7 @@ def cactiStyle(requestContext, seriesList, system=None):
         minimum = NAN
       else:
         minimum = fmt(float(minimum))
-        
+
       series.name = "%*s Current:%*s Max:%*s Min:%*s " % \
           (-nameLen, series.name,
             -lastLen, last,
@@ -1525,7 +1583,7 @@ def _getPercentile(points, n, interpolate=False):
   Statistics Handbook:
   http://www.itl.nist.gov/div898/handbook/prc/section2/prc252.htm
   """
-  sortedPoints = sorted([ p for p in points if points is not None])
+  sortedPoints = sorted([ p for p in points if p is not None])
   if len(sortedPoints) == 0:
     return None
   fractionalRank = (n/100.0) * (len(sortedPoints) + 1)
@@ -1576,6 +1634,7 @@ def removeAbovePercentile(requestContext, seriesList, n):
   """
   for s in seriesList:
     s.name = 'removeAbovePercentile(%s, %d)' % (s.name, n)
+    s.pathExpression = s.name
     percentile = nPercentile(requestContext, [s], n)[0][0]
     for (index, val) in enumerate(s):
       if val > percentile:
@@ -1590,6 +1649,7 @@ def removeAboveValue(requestContext, seriesList, n):
   """
   for s in seriesList:
     s.name = 'removeAboveValue(%s, %d)' % (s.name, n)
+    s.pathExpression = s.name
     for (index, val) in enumerate(s):
       if val > n:
         s[index] = None
@@ -1603,6 +1663,7 @@ def removeBelowPercentile(requestContext, seriesList, n):
   """
   for s in seriesList:
     s.name = 'removeBelowPercentile(%s, %d)' % (s.name, n)
+    s.pathExpression = s.name
     percentile = nPercentile(requestContext, [s], n)[0][0]
     for (index, val) in enumerate(s):
       if val < percentile:
@@ -1617,6 +1678,7 @@ def removeBelowValue(requestContext, seriesList, n):
   """
   for s in seriesList:
     s.name = 'removeBelowValue(%s, %d)' % (s.name, n)
+    s.pathExpression = s.name
     for (index, val) in enumerate(s):
       if val < n:
         s[index] = None
@@ -1639,6 +1701,19 @@ def limit(requestContext, seriesList, n):
 
   """
   return seriesList[0:n]
+
+def sortByTotal(requestContext, seriesList):
+  """
+  Takes one metric or a wildcard seriesList.
+
+  Sorts the list of metrics by the sum of values across the time period
+  specified.    
+  """
+  def compare(x,y):
+    return cmp(safeSum(y), safeSum(x))
+
+  seriesList.sort(compare)
+  return seriesList
 
 def sortByMaxima(requestContext, seriesList):
   """
@@ -1705,12 +1780,12 @@ def useSeriesAbove(requestContext, seriesList, value, search, replace):
 
   return newSeries
 
-def mostDeviant(requestContext, n, seriesList):
+def mostDeviant(requestContext, seriesList, n):
   """
-  Takes an integer N followed by one metric or a wildcard seriesList.
+  Takes one metric or a wildcard seriesList followed by an integer N.
   Draws the N most deviant metrics.
-  To find the deviant, the average across all metrics passed is determined,
-  and then the average of each metric is compared to the overall average.
+  To find the deviants, the standard deviation (sigma) of each series
+  is taken and ranked. The top N standard deviations are returned.
 
     Example:
 
@@ -2151,6 +2226,7 @@ def timeStack(requestContext, seriesList, timeShiftUnit, timeShiftStart, timeShi
     myContext['endTime'] = requestContext['endTime'] + innerDelta
     for shiftedSeries in evaluateTarget(myContext, series.pathExpression):
       shiftedSeries.name = 'timeShift(%s, %s, %s)' % (shiftedSeries.name, timeShiftUnit,shft)
+      shiftedSeries.pathExpression = shiftedSeries.name
       shiftedSeries.start = series.start
       shiftedSeries.end = series.end
       results.append(shiftedSeries)
@@ -2284,7 +2360,7 @@ def identity(requestContext, name):
   Returns datapoints where the value equals the timestamp of the datapoint.
   Useful when you have another series where the value is a timestamp, and
   you want to compare it to the time of the datapoint, to render an age
-  
+
   Example:
 
   .. code-block:: none
@@ -2315,7 +2391,7 @@ def countSeries(requestContext, *seriesLists):
 
   """
   (seriesList,start,end,step) = normalize(seriesLists)
-  name = "countSeries(%s)" % ','.join(set([s.pathExpression for s in seriesList]))
+  name = "countSeries(%s)" % formatPathExpressions(seriesList)
   values = ( int(len(row)) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
   series.pathExpression = name
@@ -2375,6 +2451,21 @@ def exclude(requestContext, seriesList, pattern):
   """
   regex = re.compile(pattern)
   return [s for s in seriesList if not regex.search(s.name)]
+
+
+def grep(requestContext, seriesList, pattern):
+  """
+  Takes a metric or a wildcard seriesList, followed by a regular expression
+  in double quotes.  Excludes metrics that don't match the regular expression.
+
+  Example:
+
+  .. code-block:: none
+
+    &target=grep(servers*.instance*.threads.busy,"server02")
+  """
+  regex = re.compile(pattern)
+  return [s for s in seriesList if regex.search(s.name)]
 
 
 def smartSummarize(requestContext, seriesList, intervalString, func='sum', alignToFrom=False):
@@ -2627,7 +2718,7 @@ def hitcount(requestContext, seriesList, intervalString, alignToInterval = False
         newValues.append(None)
 
     newName = 'hitcount(%s, "%s"%s)' % (series.name, intervalString, alignToInterval and ", true" or "")
-    newSeries = TimeSeries(newName, newStart, series.end, interval, newValues)    
+    newSeries = TimeSeries(newName, newStart, series.end, interval, newValues)
     newSeries.pathExpression = newName
     results.append(newSeries)
 
@@ -2812,6 +2903,7 @@ SeriesFunctions = {
   'invert' : invert,
   'scaleToSeconds' : scaleToSeconds,
   'offset' : offset,
+  'offsetToZero' : offsetToZero,
   'derivative' : derivative,
   'perSecond' : perSecond,
   'integral' : integral,
@@ -2854,6 +2946,7 @@ SeriesFunctions = {
   'maximumBelow' : maximumBelow,
   'nPercentile' : nPercentile,
   'limit' : limit,
+  'sortByTotal'  : sortByTotal,
   'sortByMaxima' : sortByMaxima,
   'sortByMinima' : sortByMinima,
   'useSeriesAbove': useSeriesAbove,
@@ -2906,4 +2999,5 @@ SeriesFunctions = {
 
 
 #Avoid import circularity
-from graphite.render.evaluator import evaluateTarget
+if not environ.get('READTHEDOCS'):
+  from graphite.render.evaluator import evaluateTarget

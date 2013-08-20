@@ -576,11 +576,7 @@ var GraphDataWindow = {
           var newTarget;
 
           if (extraArg) {
-            if (funcName == 'mostDeviant') { //SPECIAL CASE HACK
-              newTarget = funcName + '(' + extraArg + ',' + target + ')';
-            } else {
-              newTarget = funcName + '(' + target + ',' + extraArg + ')';
-            }
+            newTarget = funcName + '(' + target + ',' + extraArg + ')';
           } else {
             newTarget = funcName + '(' + target + ')';
           }
@@ -913,6 +909,7 @@ function createFunctionsMenu() {
         {text: 'Scale', handler: applyFuncToEachWithInput('scale', 'Please enter a scale factor')},
         {text: 'ScaleToSeconds', handler: applyFuncToEachWithInput('scaleToSeconds', 'Please enter a number of seconds to scale to')},
         {text: 'Offset', handler: applyFuncToEachWithInput('offset', 'Please enter the value to offset Y-values by')},
+        {text: 'OffsetToZero', handler: applyFuncToEach('offsetToZero')},
         {text: 'Derivative', handler: applyFuncToEach('derivative')},
         {text: 'Time-adjusted Derivative', handler: applyFuncToEachWithInput('perSecond', "Please enter a maximum value if this metric is a wrapping counter (or just leave this blank)", {allowBlank: true})},
         {text: 'Integral', handler: applyFuncToEach('integral')},
@@ -963,10 +960,12 @@ function createFunctionsMenu() {
         {text: 'Maximum Value Above', handler: applyFuncToEachWithInput('maximumAbove', 'Draw all metrics whose maximum value is above ___')},
         {text: 'Maximum Value Below', handler: applyFuncToEachWithInput('maximumBelow', 'Draw all metrics whose maximum value is below ___')},
         {text: 'Minimum Value Above', handler: applyFuncToEachWithInput('minimumAbove', 'Draw all metrics whose minimum value is above ___')},
+        {text: 'sortByTotal', handler: applyFuncToEach('sortByTotal')},
         {text: 'sortByMaxima', handler: applyFuncToEach('sortByMaxima')},
         {text: 'sortByMinima', handler: applyFuncToEach('sortByMinima')},
         {text: 'limit', handler: applyFuncToEachWithInput('limit', 'Limit to first ___ of a list of metrics')},
-        {text: 'Exclude', handler: applyFuncToEachWithInput('exclude', 'Exclude metrics that match a regular expression')}
+        {text: 'Exclude', handler: applyFuncToEachWithInput('exclude', 'Exclude metrics that match a regular expression')},
+        {text: 'Grep', handler: applyFuncToEachWithInput('grep', 'Exclude metrics that don\'t match a regular expression')}
       ]
     }, {
       text: 'Special',
