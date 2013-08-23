@@ -3355,7 +3355,7 @@ function showDashboardFinder() {
     root: 'dashboards',
     sortInfo: {
       field: 'name',
-      direction: 'DESC'
+      direction: 'ASC'
     },
     listeners: {
       beforeload: function (store) {
