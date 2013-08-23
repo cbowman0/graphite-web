@@ -3513,11 +3513,6 @@ function removeParam(param) {
 
 
 /* Target Functions API (super-ghetto) */
-function addTargetToSelectedGraph(target) {
-  selectedRecord.data.params.target.push(target);
-  selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
-}
-
 function removeTargetFromSelectedGraph(target) {
   selectedRecord.data.params.target.remove(target);
   selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
@@ -3552,7 +3547,6 @@ function applyFuncToEach(funcName, extraArg) {
 
         // Add newTarget to selectedRecord
         targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
-        addTargetToSelectedGraph(newTarget);
         targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
       }
     );
