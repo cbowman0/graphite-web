@@ -138,6 +138,9 @@ def renderView(request):
     if useCache:
       cache.set(dataKey, data, cacheTimeout)
 
+    # Sort the data so the colors match across graphs
+    data.sort(key=lambda series: series.name)
+
     # If data is all we needed, we're done
     format = requestOptions.get('format')
     if format == 'csv':
