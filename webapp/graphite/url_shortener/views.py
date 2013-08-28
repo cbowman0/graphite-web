@@ -2,8 +2,8 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, HttpResponsePermanentRedirect
 
-from url_shortener.baseconv import base62
-from url_shortener.models import Link
+from graphite.url_shortener.baseconv import base62
+from graphite.url_shortener.models import Link
 import re
 
 def follow(request, link_id):
