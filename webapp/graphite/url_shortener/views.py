@@ -15,10 +15,10 @@ def follow(request, link_id):
 def shorten(request, path):
     if request.META.get('QUERY_STRING', None):
         path += '?' + request.META['QUERY_STRING']
-    # Remove _salt and _dc to avoid creating many copies of the same URL
-    path = re.sub('&_(salt|dc)=[0-9.]+', "", path)
+    # Remove _salt, _dc and _uniq to avoid creating many copies of the same URL
+    path = re.sub('&_(uniq|salt|dc)=[0-9.]+', "", path)
 
     link, created = Link.objects.get_or_create(url=path)
     link_id = base62.from_decimal(link.id)
     url = reverse('graphite.url_shortener.views.follow', kwargs={'link_id': link_id})
-    return HttpResponse("Your short link is <a href=\"%s\">%s</a>" % (url, url))
+    return HttpResponse(url)

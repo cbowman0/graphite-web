@@ -264,7 +264,7 @@ function asDateString(dateObj) {
 function showShortUrl() {
     showUrl = function(options, success, response) {
         if(success) {
-            Ext.MessageBox.alert("Short url", response.responseText);
+            Ext.MessageBox.alert("Short url", document.URL + response.responseText);
         }
     }
     Ext.Ajax.request({
