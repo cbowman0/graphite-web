@@ -19,5 +19,7 @@ urlpatterns = patterns(
     '',
     url(r'^/rawdata/?$', views.get_data, name='graphlot_get_data'),
     url(r'^/findmetric/?$', views.find_metric, name='graphlot_find_metric'),
+    url(r'^/render/?$', views.graphlot_render_graph, name='graphlot_render_graph'),
+    url(r'^/render/rawdata/?$', views.get_data, name='get_data'),
     url(r'^/?$', views.graphlot_render, name='graphlot'),
 )
