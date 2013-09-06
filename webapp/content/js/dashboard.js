@@ -587,9 +587,9 @@ function initDashboard () {
         { text: "New Graph",
           menu: {
             items: [
-//              { text: "Empty Graph",
-//                handler: newEmptyGraph
-//              },
+              { text: "Empty Graph",
+                handler: newEmptyGraph
+              },
               { text: "From URL",
                 handler: newFromUrl
               },
@@ -1337,9 +1337,34 @@ var GraphSize = {
 };
 
 
-//XXX Add once graph controls allow better +/-
-//function newEmptyGraph() {
-//}
+// New empty Graph
+function newEmptyGraph() {
+
+  var myParams = {
+    target: []
+  };
+
+  var graphTargetString = Ext.urlEncode({target: ""});
+
+  var urlParams = {};
+  Ext.apply(urlParams, defaultGraphParams);
+  Ext.apply(urlParams, myParams);
+  Ext.apply(urlParams, GraphSize);
+  myParams['from'] = urlParams.from;
+  myParams['until'] = urlParams.until;
+
+  var record = new GraphRecord({
+   target: graphTargetString,
+    params: myParams,
+    url: '/render?' + Ext.urlEncode(urlParams),
+   'width': GraphSize.width,
+   'height': GraphSize.height,
+    });
+  graphStore.add([record]);
+  canvasId = graphStore.indexOf(record);
+  graphStore.getAt(canvasId).data.index = canvasId;
+  updateGraphRecords();
+}
 
 function newFromUrl() {
   function applyUrl() {
@@ -1844,6 +1869,9 @@ function graphClicked(graphView, graphIndex, element, evt) {
     listeners: {
       afterrender: function (thisGrid) {
         thisGrid.getSelectionModel().selectFirstRow.defer(50, thisGrid.getSelectionModel());
+      },
+      resize: function (thisGrid) {
+        thisGrid.findParentByType('menu').doLayout();
       }
     }
   });
@@ -3113,12 +3141,6 @@ function removeParam(param) {
 }
 
 
-/* Target Functions API (super-ghetto) */
-function addTargetToSelectedGraph(target) {
-  selectedRecord.data.params.target.push(target);
-  selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
-}
-
 function removeTargetFromSelectedGraph(target) {
   selectedRecord.data.params.target.remove(target);
   selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
@@ -3153,7 +3175,6 @@ function applyFuncToEach(funcName, extraArg) {
 
         // Add newTarget to selectedRecord
         targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
-        addTargetToSelectedGraph(newTarget);
         targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
       }
     );
@@ -3201,7 +3222,6 @@ function applyFuncToAll (funcName) {
       }
     );
     targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
-    addTargetToSelectedGraph(newTarget);
     targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
     refreshGraphs();
   }
@@ -3239,7 +3259,6 @@ function removeOuterCall() { // blatantly repurposed from composer_widgets.js (d
     Ext.each(args, function (arg) {
       if (!arg.match(/^([0123456789\.]+|".+")$/)) { //Skip string and number literals
         targetStore.add([ new targetStore.recordType({target: arg}) ]);
-        selectedRecord.data.params.target.push(arg);
         targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', arg), true);
       }
     });
