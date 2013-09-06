@@ -1912,7 +1912,12 @@ function graphClicked(graphView, graphIndex, element, evt) {
     height: gridHeight,
     store: targetStore,
     hideHeaders: true,
-    viewConfig: {markDirty: false},
+    viewConfig: {
+                  markDirty: false,
+                  forceFit: true,
+                  autoFill: true,
+                  scrollOffset: 0
+                },
     colModel: new Ext.grid.ColumnModel({
       columns: [
         {
