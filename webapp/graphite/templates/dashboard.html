@@ -23,6 +23,21 @@
     var CLOCK_ICON    = '{% static "img/clock_16.png" %}';
     var HELP_ICON     = '{% static "js/ext/resources/icons/fam/information.png" %}';
 
+    // Prefetch images for use in Target grid
+    (new Image()).src = "/content/img/move_up.png";
+    (new Image()).src = "/content/img/move_down.png";
+    (new Image()).src = "/content/img/delete.gif";
+
+    // Prefetch images for use in Target grid
+    (new Image()).src = "/content/img/move_up.png";
+    (new Image()).src = "/content/img/move_down.png";
+    (new Image()).src = "/content/img/delete.gif";
+
+    // Prefetch images for use in Target grid
+    (new Image()).src = "/content/img/move_up.png";
+    (new Image()).src = "/content/img/move_down.png";
+    (new Image()).src = "/content/img/delete.gif";
+
     {% if initialState %}
     var initialState = JSON.parse('{{ initialState|escapejs }}');
     {% else %}
