@@ -3287,12 +3287,6 @@ function removeParam(param) {
 }
 
 
-/* Target Functions API (super-ghetto) */
-function addTargetToSelectedGraph(target) {
-  selectedRecord.data.params.target.push(target);
-  selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
-}
-
 function removeTargetFromSelectedGraph(target) {
   selectedRecord.data.params.target.remove(target);
   selectedRecord.data.target = Ext.urlEncode({target: selectedRecord.data.params.target});
@@ -3327,7 +3321,6 @@ function applyFuncToEach(funcName, extraArg) {
 
         // Add newTarget to selectedRecord
         targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
-        addTargetToSelectedGraph(newTarget);
         targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
       }
     );
@@ -3375,7 +3368,6 @@ function applyFuncToAll (funcName) {
       }
     );
     targetStore.add([ new targetStore.recordType({target: newTarget}, newTarget) ]);
-    addTargetToSelectedGraph(newTarget);
     targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', newTarget), true);
     refreshGraphs();
   }
@@ -3415,7 +3407,6 @@ function removeOuterCall() { // blatantly repurposed from composer_widgets.js (d
     Ext.each(args, function (arg) {
       if (!arg.match(/^([0123456789\.]+|".+")$/)) { //Skip string and number literals
         targetStore.add([ new targetStore.recordType({target: arg}) ]);
-        selectedRecord.data.params.target.push(arg);
         targetGrid.getSelectionModel().selectRow(targetStore.findExact('target', arg), true);
       }
     });
