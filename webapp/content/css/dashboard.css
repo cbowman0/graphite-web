@@ -31,6 +31,24 @@ div.overlay-close-button {
   -khtml-border-radius:  5px;
 }
 
+div.overlay-graphlot-button {
+  position: absolute;
+  top: -5px;
+  right: 10px;
+  background-color: #faa;
+  color: #922;
+  font-family: monospace;
+  font-size: 8pt;
+  font-weight: bold;
+  text-align: center;
+  width: 15px;
+  height: 15px;
+  border-radius:         5px;
+  -moz-border-radius:    5px;
+  -webkit-border-radius: 5px;
+  -khtml-border-radius:  5px;
+}
+
 img.graph-img {
   visibility: visible;
   padding: 3px;
@@ -55,6 +73,10 @@ img.graph-img-loading {
 }
 
 .graph-over div.overlay-close-button {
+  visibility: visible;
+}
+
+.graph-over div.overlay-graphlot-button {
   visibility: visible;
 }
 
