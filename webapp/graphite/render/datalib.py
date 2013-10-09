@@ -146,6 +146,13 @@ def fetchData(requestContext, pathExpr):
                      (e, retries, settings.MAX_FETCH_RETRIES))
         retries += 1
 
+  # Sort the values returned so we can consistent colors across requests for data.
+  # Can be enabled by turning on sort_series in the render.conf
+  if (requestContext['config'].render_config['sort_series']):
+    seriesList.sort(key=lambda series: series.name)
+
+  return seriesList
+
 
 def nonempty(series):
   for value in series:
