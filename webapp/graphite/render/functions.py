@@ -218,6 +218,20 @@ def matchSeries(seriesList1, seriesList2):
   assert len(seriesList2) == len(seriesList1), "The number of series in each argument must be the same"
   return izip(sorted(seriesList1, key=lambda a: a.name), sorted(seriesList2, key=lambda a: a.name))
 
+def trimRecent(seriesList):
+  # trim right side of the graph to avoid dip when only part of most recent metrics has entered the system
+  for s in seriesList:
+    if (s[-1] is None) and (s[-2] is not None):
+      for sl in seriesList:
+        sl[-1] = None
+      break
+  for s in seriesList:
+    if (s[-2] is None) and (s[-3] is not None):
+      for sl in seriesList:
+        sl[-2] = None
+      break
+  return (seriesList)
+
 def formatPathExpressions(seriesList):
   # remove duplicates
   pathExpressions = []
@@ -294,6 +308,10 @@ def aggregate(requestContext, seriesList, func, xFilesFactor=None):
     (seriesList,start,end,step) = normalize(seriesList)
   except:
     return []
+
+  if (requestContext['config'].render_config['trim_recent']):
+    seriesList = trimRecent(seriesList)
+
   xFilesFactor = xFilesFactor if xFilesFactor is not None else requestContext.get('xFilesFactor')
   name = "%sSeries(%s)" % (func, formatPathExpressions(seriesList))
   values = ( consolidationFunc(row) if xffValues(row, xFilesFactor) else None for row in izip_longest(*seriesList) )

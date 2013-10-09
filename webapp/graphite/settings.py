@@ -45,6 +45,7 @@ URL_PREFIX = ''
 CONF_DIR = ''
 DASHBOARD_CONF = ''
 GRAPHTEMPLATES_CONF = ''
+RENDER_CONF = ''
 STORAGE_DIR = ''
 WHITELIST_FILE = ''
 INDEX_FILE = ''
@@ -234,6 +235,8 @@ if not DASHBOARD_CONF:
   DASHBOARD_CONF = join(CONF_DIR, 'dashboard.conf')
 if not GRAPHTEMPLATES_CONF:
   GRAPHTEMPLATES_CONF = join(CONF_DIR, 'graphTemplates.conf')
+if not RENDER_CONF:
+  RENDER_CONF = join(CONF_DIR, 'render.conf')
 
 if not STORAGE_DIR:
   STORAGE_DIR = os.environ.get('GRAPHITE_STORAGE_DIR', join(GRAPHITE_ROOT, 'storage'))

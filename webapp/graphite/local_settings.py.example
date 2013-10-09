@@ -117,6 +117,7 @@ DEFAULT_XFILES_FACTOR = 0
 ## Webapp config files
 #DASHBOARD_CONF = '/opt/graphite/conf/dashboard.conf'
 #GRAPHTEMPLATES_CONF = '/opt/graphite/conf/graphTemplates.conf'
+#RENDER_CONF = '/opt/graphite/conf/render.conf'
 
 ## Data directories
 #
