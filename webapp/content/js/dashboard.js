@@ -1070,6 +1070,7 @@ function importGraphUrl(targetUrl, options) {
       'render_type': RENDER_ENGINE,
       'width': GraphSize.width,
       'height': GraphSize.height,
+      render_type: RENDER_ENGINE
       });
       graphStore.add([record]);
       canvasId = graphStore.indexOf(record);
@@ -1424,6 +1425,7 @@ function newEmptyGraph() {
     url: '/render?' + Ext.urlEncode(urlParams),
    'width': GraphSize.width,
    'height': GraphSize.height,
+   render_type: RENDER_ENGINE
     });
   graphStore.add([record]);
   canvasId = graphStore.indexOf(record);
@@ -1587,7 +1589,8 @@ function newFromMetric() {
     var record = new GraphRecord({
       target: graphTargetString,
       params: myParams,
-      url: '/render?' + Ext.urlEncode(urlParams)
+      url: '/render?' + Ext.urlEncode(urlParams),
+      render_type: RENDER_ENGINE
       });
     graphStore.add([record]);
     updateGraphRecords();
