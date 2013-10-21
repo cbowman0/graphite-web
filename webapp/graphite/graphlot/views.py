@@ -48,6 +48,7 @@ def get_data(request):
     (graphOptions, requestOptions) = parseOptions(request)
     xrange = request.GET.get('xrange', None)
     requestContext = {
+        'config' : config,
         'startTime' : requestOptions['startTime'],
         'endTime' : requestOptions['endTime'],
         'localOnly' : False,
