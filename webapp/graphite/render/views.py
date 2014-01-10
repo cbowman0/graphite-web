@@ -60,7 +60,7 @@ defaultRenderConfig = {
   'sort_series' : 0,
 }
 
-class RenderConfig:
+class RenderConfig(object):
   def __init__(self):
     self.last_read = 0
     self.schemes = [defaultScheme]
