@@ -17,7 +17,7 @@ import pytz
 import six.moves.http_client
 
 import re
-from os.path import getmtime
+from os.path import getmtime, isfile
 from ConfigParser import ConfigParser
 from datetime import datetime
 from time import time
@@ -67,7 +67,7 @@ class RenderConfig:
     self.render_config = defaultRenderConfig.copy()
 
   def check(self):
-    if getmtime(settings.RENDER_CONF) > self.last_read:
+    if isfile(settings.RENDER_CONF) and getmtime(settings.RENDER_CONF) > self.last_read:
       self.load()
 
   def load(self):
