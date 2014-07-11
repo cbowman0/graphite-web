@@ -104,7 +104,7 @@ def safeMax(values):
 def safeMap(function, values):
   safeValues = [v for v in values if v is not None]
   if safeValues:
-    return [function(x) for x in values]
+    return [function(x) for x in safeValues]
 
 def safeAbs(value):
   if value is None: return None
@@ -1219,7 +1219,20 @@ def legendValue(requestContext, seriesList, *valueTypes):
     'total': safeSum,
     'min':   safeMin,
     'max':   safeMax,
-    'last':  last
+    'last':  last,
+    'invtotal': lambda s: safeSum(safeMap(lambda x: -x, s)),
+    'invmin': lambda s: safeMin(safeMap(lambda x: -x, s)),
+    'invmax': lambda s: safeMax(safeMap(lambda x: -x, s)),
+  }
+  valueNames = {
+    'avg': 'Avg',
+    'total': 'Total',
+    'min':   'Min',
+    'max':   'Max',
+    'last':  'Last',
+    'invtotal': 'Total',
+    'invmin': 'Min',
+    'invmax': 'Max',
   }
   system = None
   if valueTypes[-1] in ('si', 'binary'):
@@ -1229,14 +1242,14 @@ def legendValue(requestContext, seriesList, *valueTypes):
     valueFunc = valueFuncs.get(valueType, lambda s: '(?)')
     if system is None:
       for series in seriesList:
-        series.name += " (%s: %s)" % (valueType, valueFunc(series))
+        series.name += " (%s: %s)" % (valueNames.get(valueType, valueType), valueFunc(series))
     else:
       for series in seriesList:
         value = valueFunc(series)
         formatted = None
         if value is not None:
           formatted = "%.2f%s" % format_units(abs(value), system=system)
-        series.name = "%-20s%-5s%-10s" % (series.name, valueType, formatted)
+        series.name = "%-20s%-5s%-10s" % (series.name, valueNames.get(valueType, valueType), formatted)
   return seriesList
 
 def alpha(requestContext, seriesList, alpha):
