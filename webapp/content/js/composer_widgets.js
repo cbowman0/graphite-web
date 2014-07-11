@@ -1314,7 +1314,8 @@ function createOptionsMenu() {
             menuRadioItem("legend", "Hide If Too Many", "hideLegend"),
             menuRadioItem("legend", "Always Hide", "hideLegend", "true"),
             menuRadioItem("legend", "Never Hide", "hideLegend", "false"),
-            menuCheckItem("Hide Duplicate Items", "uniqueLegend")
+            menuCheckItem("Hide Duplicate Items", "uniqueLegend"),
+            menuCheckItem("Add Totals", "printTotals") 
           ]
         }
       },
