@@ -64,6 +64,7 @@ def renderView(request):
     'xFilesFactor' : requestOptions['xFilesFactor'],
   }
   data = requestContext['data']
+  totals = []
 
   response = None
 
@@ -115,6 +116,25 @@ def renderView(request):
       targets = requestOptions['targets']
 
       data.extend(evaluateTarget(requestContext, targets))
+
+      # Contruct a legend string with totals
+      if requestOptions.get('printTotals', False) and requestContext.has_key('totalStack'):
+        from functions import legendValue
+        from graphite.render.datalib import TimeSeries
+        series_sample = data[0]
+        start = series_sample.start
+        end = series_sample.end
+        step = series_sample.step
+        for (stack, values) in requestContext['totalStack'].items():
+          name = stack
+          if name == '__DEFAULT__':
+            name = ''
+          name = "Total %s" % name
+          totalSeries = [TimeSeries(name, start, end, step, values)]
+          legendString = legendValue(requestContext, totalSeries, "last", "avg", "max", "si")[0].name
+          totals.append(legendString)
+
+      graphOptions['totalsLegend'] = totals
 
       if useCache:
         cache.add(dataKey, data, cacheTimeout)
@@ -380,6 +400,8 @@ def parseOptions(request):
     requestOptions['maxDataPoints'] = int(queryParams['maxDataPoints'])
   if 'noNullPoints' in queryParams:
     requestOptions['noNullPoints'] = True
+  if queryParams.get('printTotals', None) == 'true':
+    requestOptions['printTotals'] = True
 
   requestOptions['localOnly'] = queryParams.get('local') == '1'
 

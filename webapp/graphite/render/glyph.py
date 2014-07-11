@@ -532,6 +532,7 @@ class Graph:
     self.margin = int( params.get('margin',10) )
     self.userTimeZone = params.get('tz')
     self.logBase = params.get('logBase', None)
+    self.totalsLegend = params.get('totalsLegend', [])
     self.minorY = int(params.get('minorY', 1))
 
     if self.logBase:
@@ -927,7 +928,8 @@ class LineGraph(Graph):
                   'yStepRight', 'rightWidth', 'rightColor', 'rightDashed', \
                   'leftWidth', 'leftColor', 'leftDashed', 'xFormat', 'minorY', \
                   'hideYAxis', 'uniqueLegend', 'vtitleRight', 'yDivisors', \
-                  'connectedLimit', 'hideXAxis', 'hideNullFromLegend')
+                  'connectedLimit', 'hideXAxis', 'hideNullFromLegend', \
+                  'printTotals')
   validLineModes = ('staircase','slope','connected')
   validAreaModes = ('none','first','all','stacked')
   validPieModes = ('maximum', 'minimum', 'average')
@@ -1058,6 +1060,7 @@ class LineGraph(Graph):
         if series.name:
           if not (params.get('hideNullFromLegend', False) and all(v is None for v in list(series))):
             elements.append((unquote_plus(series.name),series.color,series.options.get('secondYAxis')))
+      elements.extend([(name, 'white', None) for name in self.totalsLegend])
       if len(elements) > 0:
         self.drawLegend(elements, params.get('uniqueLegend', False))
 

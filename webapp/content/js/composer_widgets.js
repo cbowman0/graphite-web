@@ -1387,6 +1387,7 @@ function createOptionsMenu() {
             menuRadioItem('legend', 'Never Hide', 'hideLegend', 'false'),
             menuCheckItem('Hide Duplicate Items', 'uniqueLegend'),
             menuCheckItem('Hide Null Series', 'hideNullFromLegend')
+            menuCheckItem('Add Totals', 'printTotals')
           ]
         }
       },
