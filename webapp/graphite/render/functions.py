@@ -1216,23 +1216,17 @@ def legendValue(requestContext, seriesList, *valueTypes):
 
   valueFuncs = {
     'avg':   lambda s: safeDiv(safeSum(s), safeLen(s)),
-    'total': safeSum,
-    'min':   safeMin,
-    'max':   safeMax,
-    'last':  last,
-    'invtotal': lambda s: safeSum(safeMap(lambda x: -x, s)),
-    'invmin': lambda s: safeMin(safeMap(lambda x: -x, s)),
-    'invmax': lambda s: safeMax(safeMap(lambda x: -x, s)),
+    'total': lambda s: safeSum(safeMap(lambda x: safeAbs(x), s)),
+    'min':   lambda s: safeMin(safeMap(lambda x: safeAbs(x), s)),
+    'max':   lambda s: safeMax(safeMap(lambda x: safeAbs(x), s)),
+    'last':  lambda s: last(safeMap(lambda x: safeAbs(x), s))
   }
   valueNames = {
     'avg': 'Avg',
     'total': 'Total',
     'min':   'Min',
     'max':   'Max',
-    'last':  'Last',
-    'invtotal': 'Total',
-    'invmin': 'Min',
-    'invmax': 'Max',
+    'last':  'Last'
   }
   system = None
   if valueTypes[-1] in ('si', 'binary'):
