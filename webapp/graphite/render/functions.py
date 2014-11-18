@@ -2114,10 +2114,11 @@ def stacked(requestContext,seriesLists,stackName='__DEFAULT__'):
     for i in range(len(series)):
       if len(totalStack) <= i: totalStack.append(0)
 
-      if series[i] is not None:
+      if series[i] is not None and totalStack[i] is not None:
         totalStack[i] += series[i]
         newValues.append(totalStack[i])
       else:
+        totalStack[i] = None
         newValues.append(None)
 
     # Work-around for the case when legend is set
