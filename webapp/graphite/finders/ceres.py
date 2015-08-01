@@ -35,4 +35,3 @@ class CeresFinder:
 
         elif os.path.isdir(fs_path):
           yield BranchNode(metric_path)
-
