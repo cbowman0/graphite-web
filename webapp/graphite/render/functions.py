@@ -150,10 +150,23 @@ class NormalizeEmptyResultError(Exception):
   # throw error for normalize() when empty
   pass
 
-
 def matchSeries(seriesList1, seriesList2):
   assert len(seriesList2) == len(seriesList1), "The number of series in each argument must be the same"
   return izip(sorted(seriesList1, lambda a,b: cmp(a.name, b.name)), sorted(seriesList2, lambda a,b: cmp(a.name, b.name)))
+
+def trimRecent(seriesList):
+  # trim right side of the graph to avoid dip when only part of most recent metrics has entered the system
+  for s in seriesList:
+    if (s[-1] is None) and (s[-2] is not None):
+      for sl in seriesList:
+        sl[-1] = None
+      break
+  for s in seriesList:
+    if (s[-2] is None) and (s[-3] is not None):
+      for sl in seriesList:
+        sl[-2] = None
+      break
+  return (seriesList)
 
 def formatPathExpressions(seriesList):
    # remove duplicates
@@ -192,6 +205,10 @@ def sumSeries(requestContext, *seriesLists):
     (seriesList,start,end,step) = normalize(seriesLists)
   except:
     return []
+
+  if (requestContext['config'].render_config['trim_recent']):
+    seriesList = trimRecent(seriesList)
+
   name = "sumSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeSum(row) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
@@ -337,6 +354,10 @@ def averageSeries(requestContext, *seriesLists):
 
   """
   (seriesList,start,end,step) = normalize(seriesLists)
+
+  if (requestContext['config'].render_config['trim_recent']):
+    seriesList = trimRecent(seriesList)
+
   name = "averageSeries(%s)" % formatPathExpressions(seriesList)
   values = ( safeDiv(safeSum(row),safeLen(row)) for row in izip(*seriesList) )
   series = TimeSeries(name,start,end,step,values)
