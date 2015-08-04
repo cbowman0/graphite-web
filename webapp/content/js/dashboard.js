@@ -2113,19 +2113,19 @@ function graphClicked(graphView, graphIndex, element, evt) {
 
   //create new row
   buttons.push({
-      xtype: 'button',
-      text: 'Add Target',
-      width: buttonWidth,
-      handler: function() {
-                 // Hide the other menus
-                 operationsMenu.hide();
-                 optionsMenu.doHide(); // private method... yuck
-                 functionsMenu.hide();
+    xtype: 'button',
+    text: 'Add Target',
+    width: buttonWidth,
+    handler: function() {
+               // Hide the other menus
+               operationsMenu.hide();
+               optionsMenu.doHide(); // private method... yuck
+               functionsMenu.hide();
 
-                 targetStore.add([ new targetStore.recordType({target: 'Edit to save'}) ]);
-                 targets.push('Edit to save');
-                 targetGrid.setHeight((rowHeight * Math.min(targets.length, maxRows)) + frameHeight);
-      }
+               targetStore.add([ new targetStore.recordType({target: 'Edit to save'}) ]);
+               targets.push('Edit to save');
+               targetGrid.setHeight((rowHeight * Math.min(targets.length, maxRows)) + frameHeight);
+    }
   });
 
 
