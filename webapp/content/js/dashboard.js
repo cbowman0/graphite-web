@@ -415,6 +415,7 @@ function initDashboard () {
         '<tpl if="render_type == \'cairo\'">',
           '<img class="graph-img{loading}" src="{url}" width="{width}" height="{height}" id="graph{index}">',
           '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); refreshGraphs(); justClosedGraph = true;">X</div>',
+          '<div class="overlay-graphlot-button" onclick="javascript: window.open(\'/graphlot{url}\',\'_blank\')">G</div>',
         '</tpl>',
 
         '</div>',
