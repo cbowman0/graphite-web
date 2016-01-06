@@ -100,6 +100,7 @@ try:
         'graphite.finders',
         'graphite.functions',
         'graphite.functions.custom',
+        'graphite.graphlot',
         'graphite.metrics',
         'graphite.readers',
         'graphite.render',

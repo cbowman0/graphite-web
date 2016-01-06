@@ -47,6 +47,7 @@ function createComposerWindow(myComposer) {
     createToolbarButton('Update Graph', 'refresh.png', updateGraph),
     createToolbarButton('Select a Date Range', 'calendar.png', toggleWindow(createCalendarWindow) ),
     createToolbarButton('Select Recent Data', 'clock.png', toggleWindow(createRecentWindow) ),
+    createToolbarButton('Open in GraphPlot', 'line_chart.png', function() { window.open(document.body.dataset.baseUrl + 'graphlot/?' + Composer.url.queryString,'_blank') }),
     createToolbarButton('Create from URL', 'upload.png', toggleWindow(createURLWindow) ),
     createToolbarButton('Short URL', 'share.png', showShortUrl),
     '-',
