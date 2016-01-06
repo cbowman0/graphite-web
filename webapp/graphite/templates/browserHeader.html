@@ -76,6 +76,7 @@ limitations under the License. -->
           <li><a href="{{documentation_url}}" target="_newWindow">Documentation</a></li>
         {% endif %}
         <li><a href="{% url "dashboard" %}" target="_top">Dashboard</a></li>
+        <li><a href="{% url "graphlot" %}" target="_top">flot</a></li>
         <li><a href="{% url "events" %}" target="_top">Events</a></li>
         {% if user.is_authenticated %}
           <li class="user_state"><a href="/account/logout/" class="logout" target="_top">Logout</a> <b>{{ user.username }}</b> (<a href="/account/edit/" target="_top">profile</a>)</li>
