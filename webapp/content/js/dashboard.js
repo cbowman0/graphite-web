@@ -1033,7 +1033,7 @@ function graphAreaToggle(target, options) {
     var record = new GraphRecord({
       target: graphTargetString,
       params: myParams,
-      url: document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(urlParams)
+      url: document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(urlParams),
       'width': GraphSize.width,
       'height': GraphSize.height,
       'name': this.storeId,
@@ -1082,7 +1082,7 @@ function importGraphUrl(targetUrl, options) {
     var record = new GraphRecord({
       target: graphTargetString,
       params: params,
-      url: document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(urlParams)
+      url: document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(urlParams),
       'render_type': RENDER_ENGINE,
       'width': GraphSize.width,
       'height': GraphSize.height,
@@ -2740,7 +2740,7 @@ function editDashboard() {
       var record = new GraphRecord({
         target: targets[i].target,
         params: myParams,
-        url: document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(urlParams)
+        url: document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(urlParams),
         render_type: render_type
       });
       graphStore.add([record]);
