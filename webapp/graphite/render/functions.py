@@ -1214,10 +1214,11 @@ def stacked(requestContext,seriesLists,stackName='__DEFAULT__'):
     for i in range(len(series)):
       if len(totalStack) <= i: totalStack.append(0)
 
-      if series[i] is not None:
+      if series[i] is not None and totalStack[i] is not None:
         totalStack[i] += series[i]
         newValues.append(totalStack[i])
       else:
+        totalStack[i] = None
         newValues.append(None)
 
     # Work-around for the case when legend is set
@@ -1412,10 +1413,11 @@ def legendValue(requestContext, seriesList, *valueTypes):
   """
   def last(s):
     "Work-around for the missing last point"
-    v = s[-1]
-    if v is None:
-      return s[-2]
-    return v
+    for i in xrange(1, 4):
+      v = s[-i]
+      if v is not None:
+        return v
+    return None
 
   valueFuncs = {
     'avg':   lambda s: safeDiv(safeSum(s), safeLen(s)),
