@@ -576,6 +576,11 @@ function initDashboard () {
           handler: saveDashboard,
           disabled: !hasPermission('change')
         }, {
+          id: 'show-json-url-button',
+          text: "Show JSON URL",
+          handler: showJsonURL,
+          disabled: (dashboardName == null) ? true : false
+        }, {
           text: "Configure UI",
           handler: configureUI
         }, {
@@ -1759,6 +1764,53 @@ function showShareWindow() {
   win.show();
 }
 
+function showJsonURL() {
+  urlparts = dashboardURL.split('/');
+  dashboard_name = urlparts.pop();
+  dashboard_prefix = urlparts.pop();
+
+  if( dashboard_prefix == 'dashboard' ) {
+    urlparts.push(dashboard_prefix);
+    urlparts.push('load');
+  } else {
+    urlparts.push('load_template');
+    urlparts.push(dashboard_prefix);
+  }
+  urlparts.push(dashboard_name);
+  var jsonURL = urlparts.join('/');
+
+  var win = new Ext.Window({
+    title: "Share Dashboard",
+    width: 600,
+    height: 125,
+    layout: 'border',
+    modal: true,
+    items: [
+      {
+        xtype: "label",
+        region: 'north',
+        style: "text-align: center;",
+        text: "URL to JSON dashboard configuration."
+      }, {
+        xtype: 'textfield',
+        region: 'center',
+        value: jsonURL,
+        editable: false,
+        style: "text-align: center; font-size: large;",
+        listeners: {
+          focus: function (field) { field.selectText(); }
+        }
+      }
+    ],
+    buttonAlign: 'center',
+    buttons: [
+      {text: "Close", handler: function () { win.close(); } }
+    ]
+  });
+  win.show();
+}
+
+
 /* Other stuff */
 var targetGrid;
 var activeMenu;
@@ -2707,6 +2759,7 @@ function deleteTemplate(name) {
 function setDashboardName(name) {
   dashboardName = name;
   var saveButton = Ext.getCmp('dashboard-save-button');
+  var showJsonUrlButton = Ext.getCmp('show-json-url-button');
 
   if (name == null || !hasPermission('change')) {
     dashboardURL = null;
@@ -2730,6 +2783,7 @@ function setDashboardName(name) {
     navBar.setTitle(name + " - (" + dashboardURL + ")");
     saveButton.setText('Save "' + name + '"');
     saveButton.enable();
+    showJsonUrlButton.enable();
   }
 }
 
