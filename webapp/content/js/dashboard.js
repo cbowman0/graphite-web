@@ -394,11 +394,9 @@ function initDashboard () {
         '<tpl if="render_type == \'cairo\'">',
           '<img class="graph-img" src="{url}" width="{width}" height="{height}" alt="Graph">',
           '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); refreshGraphs(); justClosedGraph = true;">X</div>',
+          '<div class="overlay-graphlot-button", onclick="javascript: window.open(\'/graphlot/?{url}\',\'_blank\')">G</div>',
         '</tpl>',
 
-          '<img class="graph-img" src="{url}" width="{width}" height="{height}">',
-          '<div class="overlay-close-button" onclick="javascript: graphStore.removeAt(\'{index}\'); updateGraphRecords(); justClosedGraph = true;">X</div>',
-          '<div class="overlay-graphlot-button", onclick="javascript: window.open(\'/graphlot/?{url}\',\'_blank\')">G</div>',
         '</div>',
       '</div>',
     '</tpl>',
