@@ -172,7 +172,7 @@ class RemoteReader(object):
         self.connection.timeout = settings.REMOTE_FETCH_TIMEOUT
         self.connection.request('GET', urlpath)
         self.cache_lock.acquire()
-        self.connections[url] = connection
+        self.connections[url] = self.connection
         self.cache_lock.release()
         connection_event.set()
       except:
