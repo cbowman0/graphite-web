@@ -1913,7 +1913,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
             width: 30,
             sortable: false,
             items: [{
-                icon: '/content/img/delete.gif',
+                icon: '/content/img/trash.png',
                 tooltip: 'Delete Row',
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
