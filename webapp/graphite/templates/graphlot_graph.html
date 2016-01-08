@@ -1,18 +1,18 @@
-<html>
+{% load static staticfiles %}<html>
   <head>
     <title>Graphlot</title>
-    <script type="text/javascript" src="../../content/js/jquery.js"></script>
-    <script type="text/javascript" src="../../content/js/jquery.color.js"></script>
-    <script type="text/javascript" src="../../content/js/flot/jquery.flot.js"></script>
-    <script type="text/javascript" src="../../content/js/jquery.autocomplete.js"></script>
-    <script type="text/javascript" src="../../content/js/flot/jquery.flot.selection.js"></script>
-    <script type="text/javascript" src="../../content/js/flot/jquery.flot.crosshair.js"></script>
-    <script type="text/javascript" src="../../content/js/flot/jquery.flot.time.js"></script>
-    <script type="text/javascript" src="../../content/js/jquery.flot.axislabels.js"></script>
-    <script type="text/javascript" src="../../content/js/jquery.graphite-dashboard.js"></script>
+    <script type="text/javascript" src="{% static "js/jquery.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.color.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/flot/jquery.flot.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.autocomplete.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/flot/jquery.flot.selection.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/flot/jquery.flot.crosshair.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/flot/jquery.flot.time.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.flot.axislabels.js" %}"></script>
+    <script type="text/javascript" src="{% static "js/jquery.graphite-dashboard.js" %}"></script>
 
-    <link rel="stylesheet" type="text/css" href="../../content/css/jquery.autocomplete.css" />
-    <link rel="stylesheet" type="text/css" href="../../content/css/dashboard-default.css" />
+    <link rel="stylesheet" type="text/css" href="{% static "css/jquery.autocomplete.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "css/dashboard-default.css" %}" />
     
     <script type="text/javascript">
 
@@ -32,7 +32,7 @@
 
 
     </head>
-    <body class="graph-area-body">
+    <body data-static-root="{% get_static_prefix %}" data-base-url="{% url "browser" %}" class="graph-area-body">
       <div id="g_wrap0">
         <div id="g_graph0" style="width:{{width}}px;height:{{height}}px"></div>
       </div>

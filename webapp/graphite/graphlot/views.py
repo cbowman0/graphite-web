@@ -9,7 +9,7 @@ from graphite.account.models import Profile
 from graphite.compat import HttpResponse, HttpResponseBadRequest
 from graphite.logger import log
 from graphite.util import json, getProfile, getProfileByUsername
-from graphite.render.views import parseOptions
+from graphite.render.views import parseOptions, config
 from graphite.render.evaluator import evaluateTarget
 from graphite.storage import STORE
 
@@ -32,7 +32,6 @@ def graphlot_render(request, dest="graphlot.html"):
       'fromtime' : fromtime,
       'untiltime' : untiltime,
       'events' : events,
-      'slash' : get_script_prefix(),
       'height' : height,
       'width' : width,
       'title' : title,
@@ -47,6 +46,7 @@ def get_data(request):
     (graphOptions, requestOptions) = parseOptions(request)
     xrange = request.GET.get('xrange', None)
     requestContext = {
+        'config' : config,
         'startTime' : requestOptions['startTime'],
         'endTime' : requestOptions['endTime'],
         'localOnly' : False,
