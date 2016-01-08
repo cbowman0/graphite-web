@@ -1875,7 +1875,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
             width: 30,
             sortable: false,
             items: [{
-                icon: '/content/img/move_up.png',
+                icon: '/static/img/move_up.png',
                 tooltip: 'Move Up',
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
@@ -1894,7 +1894,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
             width: 30,
             sortable: false,
             items: [{
-                icon: '/content/img/move_down.png',
+                icon: '/static/img/move_down.png',
                 tooltip: 'Move Down',
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
@@ -1913,7 +1913,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
             width: 30,
             sortable: false,
             items: [{
-                icon: '/content/img/trash.png',
+                icon: '/static/img/trash.png',
                 tooltip: 'Delete Row',
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
