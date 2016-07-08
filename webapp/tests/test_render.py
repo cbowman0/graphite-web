@@ -1,9 +1,12 @@
 from datetime import datetime
 import copy
+from pyparsing import ParseException
+import json
 import os
 import time
 import math
 import logging
+import pytz
 import shutil
 import sys
 
@@ -997,3 +1000,80 @@ class ConsistentHashRingTestFNV1A(TestCase):
         self.assertEqual(hashring.get_node(
                         'stats.checkout.cluster.padamski-wro.api.v1.payment-initialize.count'),
                         ('127.0.0.3', '866a18b81f2dc4649517a1df13e26f28'))
+
+
+class grammarTest(TestCase):
+    def test_grammar(self):
+        from graphite.render.grammar import grammar
+        with self.assertRaises(ParseException):
+            tokens = grammar.parseString('')
+
+    def test_grammar_target(self):
+        from graphite.render.grammar import grammar
+        target = 'movingMedian(absolute(diffSeries(averageSeries(collectd.*.load.value),mostDeviant(collectd.*.load.value,1))),3)'
+        expected_tokens = [[['movingMedian', [[['absolute', [[['diffSeries', [[['averageSeries', [['collectd.*.load.value']]]]], [[['mostDeviant', [['collectd.*.load.value']], [['1']]]]]]]]]]], [['3']]]]]
+        tokens = grammar.parseString(target)
+        #XXX Iterate over a set of expeted types and verify they exist properly
+        self.assertEqual(str(tokens), str(expected_tokens))
+
+class evaluatorTest(TestCase):
+    def test_evaluateTarget_complex(self):
+        request_context = {
+                           'template': {},
+                           'args': (),
+                           'localOnly': False,
+                           'startTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'endTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'data': []
+                          }
+
+        target = 'movingMedian(absolute(diffSeries(averageSeries(collectd.*.load.value),mostDeviant(collectd.*.load.value,1))),3.0)'
+        print evaluateTarget(request_context, target)
+
+    def test_evaluateTarget_boolean(self):
+        request_context = {
+                           'template': {},
+                           'args': (),
+                           'localOnly': False,
+                           'startTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'endTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'data': []
+                          }
+        target = 'summarize(collectd.*.load.value, "1hour", "avg", true)'
+        print evaluateTarget(request_context, target)
+
+#XXX Doesn't work
+    def test_evaluateTarget_missing_template(self):
+        request_context = {
+                           'args': (),
+                           'localOnly': False,
+                           'startTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'endTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'data': []
+                          }
+        target = 'summarize(collectd.*.load.value, "1hour", "avg", true)'
+        print evaluateTarget(request_context, target)
+
+    def test_evaluateTarget_scientific(self):
+        request_context = {
+                           'template': {},
+                           'args': (),
+                           'localOnly': False,
+                           'startTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'endTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
+                           'data': []
+                          }
+        target = 'scale(collectd.*.load.value, 10e10)'
+        print evaluateTarget(request_context, target)
+
+
+
+#target: movingMedian(absolute(diffSeries(averageSeries(collectd.*.load.value),mostDeviant(collectd.*.load.value,1))),3)
+#tokens: [[['movingMedian', [[['absolute', [[['diffSeries', [[['averageSeries', [['collectd.*.load.value']]]]], [[['mostDeviant', [['collectd.*.load.value']], [['1']]]]]]]]]]], [['3']]]]]
+
+#target: absolute(diffSeries(averageSeries(instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend),mostDeviant(instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend,1)))
+#tokens: [[[u'absolute', [[[u'diffSeries', [[[u'averageSeries', [[u'instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend']]]]], [[[u'mostDeviant', [[u'instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend']], [[u'1']]]]]]]]]]]
+
+#    def test_grammar_enable_debug(self):
+#        from graphite.render.grammar import grammar, enableDebug
+#        self.assertEqual(enableDebug(), None)
