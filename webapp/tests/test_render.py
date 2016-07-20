@@ -922,6 +922,17 @@ class RenderTest(TestCase):
         data = json.loads(response.content)[0]
         self.assertEqual(data['target'], 'sumSeries(hosts.worker*.cpu)')
 
+    def test_template_invalid(self):
+        self.create_whisper_hosts()
+        self.addCleanup(self.wipe_whisper_hosts)
+
+        url = reverse('graphite.render.views.renderView')
+        with self.assertRaisesRegexp(ValueError, 'invalid template\(\) syntax, only string/numeric arguments are allowed'):
+          response = self.client.get(url, {
+                 'target': 'template(sumSeries(hosts.$1.cpu),a(b))',
+                 'format': 'json',
+          })
+
 class ConsistentHashRingTest(TestCase):
     def test_chr_compute_ring_position(self):
         hosts = [("127.0.0.1", "cache0"),("127.0.0.1", "cache1"),("127.0.0.1", "cache2")]
@@ -1033,18 +1044,6 @@ class evaluatorTest(TestCase):
     def test_evaluateTarget_boolean(self):
         request_context = {
                            'template': {},
-                           'args': (),
-                           'localOnly': False,
-                           'startTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
-                           'endTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
-                           'data': []
-                          }
-        target = 'summarize(collectd.*.load.value, "1hour", "avg", true)'
-        print evaluateTarget(request_context, target)
-
-#XXX Doesn't work
-    def test_evaluateTarget_missing_template(self):
-        request_context = {
                            'args': (),
                            'localOnly': False,
                            'startTime': datetime(2016, 6, 20, 0, 0, tzinfo=pytz.utc),
