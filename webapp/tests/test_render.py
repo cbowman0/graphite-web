@@ -1014,7 +1014,7 @@ class ConsistentHashRingTestFNV1A(TestCase):
 
 
 class grammarTest(TestCase):
-    def test_grammar(self):
+    def test_grammar_empty_string(self):
         from graphite.render.grammar import grammar
         with self.assertRaises(ParseException):
             tokens = grammar.parseString('')
@@ -1024,7 +1024,7 @@ class grammarTest(TestCase):
         target = 'movingMedian(absolute(diffSeries(averageSeries(collectd.*.load.value),mostDeviant(collectd.*.load.value,1))),3)'
         expected_tokens = [[['movingMedian', [[['absolute', [[['diffSeries', [[['averageSeries', [['collectd.*.load.value']]]]], [[['mostDeviant', [['collectd.*.load.value']], [['1']]]]]]]]]]], [['3']]]]]
         tokens = grammar.parseString(target)
-        #XXX Iterate over a set of expeted types and verify they exist properly
+        #XXX Iterate over a set of expected types and verify they exist properly
         self.assertEqual(str(tokens), str(expected_tokens))
 
 class evaluatorTest(TestCase):
@@ -1073,6 +1073,3 @@ class evaluatorTest(TestCase):
 #target: absolute(diffSeries(averageSeries(instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend),mostDeviant(instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend,1)))
 #tokens: [[[u'absolute', [[[u'diffSeries', [[[u'averageSeries', [[u'instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend']]]]], [[[u'mostDeviant', [[u'instances.prod.bidderc.ams1.*.bidder.auction.rtb_spend']], [[u'1']]]]]]]]]]]
 
-#    def test_grammar_enable_debug(self):
-#        from graphite.render.grammar import grammar, enableDebug
-#        self.assertEqual(enableDebug(), None)
