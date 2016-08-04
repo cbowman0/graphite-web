@@ -1389,6 +1389,7 @@ function newEmptyGraph() {
     url: '/render?' + Ext.urlEncode(urlParams),
    'width': GraphSize.width,
    'height': GraphSize.height,
+   'render_type': RENDER_ENGINE,
     });
   graphStore.add([record]);
   canvasId = graphStore.indexOf(record);
