@@ -7,7 +7,8 @@ from django.conf import settings
 from graphite.account.models import Profile
 from graphite.compat import HttpResponse, HttpResponseBadRequest
 from graphite.logger import log
-from graphite.util import json, getProfile, getProfileByUsername
+from graphite.util import json
+from graphite.user_util import getProfile, getProfileByUsername
 from graphite.render.views import parseOptions
 from graphite.render.evaluator import evaluateTarget
 from graphite.storage import STORE
