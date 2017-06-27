@@ -7,11 +7,14 @@ from django.conf import settings
 
 from graphite.account.models import Profile
 from graphite.compat import HttpResponse, HttpResponseBadRequest
+from graphite.remote_storage import extractForwardHeaders, prefetchRemoteData
+from graphite.storage import STORE
 from graphite.logger import log
 from graphite.util import json
 from graphite.user_util import getProfile, getProfileByUsername
 from graphite.render.views import parseOptions, config
-from graphite.render.evaluator import evaluateTarget
+from graphite.render.evaluator import evaluateTarget, extractPathExpressions
+from graphite.render.attime import parseATTime
 from graphite.storage import STORE
 
 def graphlot_render(request, dest="graphlot.html"):
@@ -28,6 +31,13 @@ def graphlot_render(request, dest="graphlot.html"):
     width = request.GET.get('width', "300")
     height = request.GET.get('height', "200")
     title = request.GET.get('title', "")
+
+    now = request.GET.get('now', "")
+    if 'now':
+        now = parseATTime(now)
+    else:
+        now = datetime.now(tzinfo)
+
     context = {
       'metric_list' : metrics,
       'fromtime' : fromtime,
@@ -36,6 +46,7 @@ def graphlot_render(request, dest="graphlot.html"):
       'height' : height,
       'width' : width,
       'title' : title,
+      'now' : now,
     }
     return render_to_response(dest, context)
 
@@ -46,13 +57,24 @@ def get_data(request):
     """Get the data for one series."""
     (graphOptions, requestOptions) = parseOptions(request)
     xrange = request.GET.get('xrange', None)
+
     requestContext = {
         'config' : config,
         'startTime' : requestOptions['startTime'],
         'endTime' : requestOptions['endTime'],
+        'now': requestOptions['now'],
         'localOnly' : False,
+        'template' : requestOptions['template'],
+        'tzinfo' : requestOptions['tzinfo'],
+        'forwardHeaders': extractForwardHeaders(request),
         'data' : []
     }
+
+    if settings.REMOTE_PREFETCH_DATA:
+      log.rendering("Prefetching remote data")
+      pathExpressions = extractPathExpressions(requestOptions['targets'])
+      prefetchRemoteData(STORE.remote_stores, requestContext, pathExpressions)
+
     target = requestOptions['targets'][0]
     seriesList = evaluateTarget(requestContext, target)
     result = []
@@ -74,7 +96,7 @@ def get_data(request):
             ))
     if not result:
         raise Exception, "No data for %s" % target
-    return HttpResponse(json.dumps(result), mimetype="application/json")
+    return HttpResponse(content=json.dumps(result), content_type="application/json")
 
 
 def find_metric(request):
