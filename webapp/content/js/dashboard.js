@@ -1105,10 +1105,10 @@ function updateGraphRecords() {
       item.set('render_type', RENDER_ENGINE);
     }
 
+    if (this.data.render_type == 'cairo') {
     //Preload the image and set it into the UI once it is available.
     item.set('loading','-loading');
     var img = new Image();
-
 
 	//Preload the image and set it into the UI once it is available.
 	var img = new Image();
@@ -1117,6 +1117,7 @@ function updateGraphRecords() {
       item.set('loading','');
     };
     img.src = document.body.dataset.baseUrl + 'render?' + Ext.urlEncode(params);
+    }
 
     item.set('width', GraphSize.width);
     item.set('height', GraphSize.height);
