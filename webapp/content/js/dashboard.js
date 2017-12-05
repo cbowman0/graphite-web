@@ -1,3 +1,5 @@
+/*global Ext*/
+
 // Global object names
 var viewport;
 var contextSelector;
