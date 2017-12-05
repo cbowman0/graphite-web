@@ -12,7 +12,10 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License. */
 
-var RENDER_BASE_URL = window.location.protocol + "//" + window.location.host + document.body.dataset.baseUrl + 'render/?';
+/*global Ext*/
+/*global TargetStore*/
+
+var RENDER_BASE_URL = window.location.protocol + '//' + window.location.host + document.body.dataset.baseUrl + 'render/?';
 
 /* GraphiteComposer encapsulates a set of Ext UI Panels,
  * as well as a ParameterizedURL for the displayed graph. */
@@ -129,9 +132,9 @@ GraphiteComposer.prototype = {
  * This code should not be specific to Graphite or
  * the Composer in any way. */
 function ParameterizedURL (baseURL) {
-  this.baseURL = baseURL ? baseURL : "";
+  this.baseURL = baseURL ? baseURL : '';
   this.params = {};
-  this.queryString = "";
+  this.queryString = '';
 }
 
 ParameterizedURL.prototype = {
@@ -207,7 +210,7 @@ ParameterizedURL.prototype = {
       if ( Ext.isString(value) ) {
         params[key] = [value];
       }
-      if (value == "undefined" || value == undefined) {
+      if (value == 'undefined' || value == undefined) {
         params[key] = null;
         delete params[key];
       }
@@ -217,7 +220,7 @@ ParameterizedURL.prototype = {
 
   setQueryString: function (qs) {
     /* Use the given query string (and update this.params to match) */
-    this.queryString = qs
+    this.queryString = qs;
     this.syncParams();
     this.syncQueryString();
   },
@@ -225,12 +228,12 @@ ParameterizedURL.prototype = {
   syncQueryString: function () {
     /* Set the value of this.queryString to reflect the parameters in this.params
      * Call this whenever you modify this.params */
-    this.queryString = Ext.urlEncode(this.params).replace(/#/,"%23");
+    this.queryString = Ext.urlEncode(this.params).replace(/#/,'%23');
   },
 
   copyQueryStringFromURL: function (url) {
     /* Make this object reflect the parameters of the given url */
-    var i = url.indexOf("?");
+    var i = url.indexOf('?');
     if (i == -1) { // No query string
       this.setParamHash({});
       return;
