@@ -41,7 +41,7 @@ if ("onhashchange" in window) // does the browser support the hashchange event?
       return;
     }
     location.reload();
-  }
+  };
 
 /* Nav Bar configuration */
 var navBarNorthConfig = {
@@ -404,7 +404,7 @@ function initDashboard () {
             repairXY: Ext.fly(sourceEl).getXY(),
             sourceStore: graphStore,
             draggedRecord: graphView.getRecord(sourceEl)
-          }
+          };
         }
       },
 
@@ -1695,7 +1695,7 @@ function selectGraphSize() {
     regexText: "Please enter a number",
     allowBlank: false,
     value: GraphSize.height || UI_CONFIG.default_graph_height
-  })
+  });
 
   var win;
 
@@ -2096,7 +2096,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
               });
               win.show();
            }
-        }
+        };
         Ext.Ajax.request({
           method: 'GET',
           url: document.body.dataset.baseUrl + 's' + record.data.url,
@@ -2239,7 +2239,7 @@ function breakoutGraph(record) {
               expr: expr,
               pre: target.substr(0, i),
               post: target.substr(i + expr.length)
-            }
+            };
 
           }
 
@@ -2647,7 +2647,7 @@ function editDashboard() {
     listeners: {
       afterrender: {
         scope: this,
-        fn: function (obj) { setupEditor(obj.body.dom); getInitialState() }
+        fn: function (obj) { setupEditor(obj.body.dom); getInitialState(); }
       }
     },
     buttons: [
@@ -2815,7 +2815,7 @@ function sendLoadRequest(name) {
 }
 
 function sendLoadTemplateRequest(name, value) {
-  urlparts = window.location.href.split('#')
+  urlparts = window.location.href.split('#');
   if(urlparts[0].split('?')[1]) {
     new_location = urlparts[0].split('?')[0] + '#'+name+'/'+value;
     window.location.href = new_location;
@@ -2866,7 +2866,7 @@ function applyState(state) {
   setDashboardName(state.name);
 
   //state.timeConfig = {type, quantity, units, untilQuantity, untilUnits, startDate, startTime, endDate, endTime}
-  var timeConfig = state.timeConfig
+  var timeConfig = state.timeConfig;
   TimeRange.type = timeConfig.type;
   TimeRange.relativeStartQuantity = timeConfig.relativeStartQuantity;
   TimeRange.relativeStartUnits = timeConfig.relativeStartUnits;
@@ -2990,7 +2990,7 @@ function setDashboardName(name) {
       return;
     }
     urlparts = urlparts.slice(0, i+1);
-    urlparts.push( encodeURI(name) )
+    urlparts.push( encodeURI(name) );
     dashboardURL = urlparts.join('/');
 
     document.title = name + " - Graphite Dashboard";
@@ -3068,7 +3068,7 @@ function updateNavBar(region) {
   NAV_BAR_REGION = region;
 
   if (graphStore.getCount() == 0) {
-    window.location.reload()
+    window.location.reload();
   } else {
     Ext.Msg.alert('Cookie Updated', "You must refresh the page to update the nav bar's location.");
     //TODO prompt the user to save their dashboard and refresh for them
