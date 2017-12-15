@@ -1918,7 +1918,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
                     var target = record.data.target;
-                    targetStore.remove(record);
+                    targetStore.remove(record);
                     if(rowIndex > 0) {
                         targetStore.insert(rowIndex-1, record);
                     } else {
@@ -1937,7 +1937,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
                     var target = record.data.target;
-                    targetStore.remove(record);
+                    targetStore.remove(record);
                     if(rowIndex < targetStore.getTotalCount()-1) {
                         targetStore.insert(rowIndex+1, record);
                     } else {
@@ -1956,7 +1956,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
                 handler: function(grid, rowIndex, colIndex) {
                     var record = targetStore.getAt(rowIndex);
                     var target = record.data.target;
-                    targetStore.remove(record);
+                    targetStore.remove(record);
                     targets.remove(target);
                 }
             }]
@@ -2155,11 +2155,11 @@ function graphClicked(graphView, graphIndex, element, evt) {
   });
 
   //create new row
-  buttons.push({
+  buttons.push({
     xtype: 'button',
-    text: 'Add Target',
+    text: 'Add Target',
     width: buttonWidth,
-    handler: function() {
+    handler: function() {
                // Hide the other menus
                operationsMenu.hide();
                optionsMenu.doHide(); // private method... yuck
@@ -2168,8 +2168,8 @@ function graphClicked(graphView, graphIndex, element, evt) {
                targetStore.add([ new targetStore.recordType({target: 'Edit to save'}) ]);
                targets.push('Edit to save');
                targetGrid.setHeight((rowHeight * Math.min(targets.length, maxRows)) + frameHeight);
-    }
-  });
+    }
+  });
 
 
   menuItems.push({
