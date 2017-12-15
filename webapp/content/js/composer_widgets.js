@@ -86,11 +86,11 @@ function createComposerWindow(myComposer) {
   // Tack on some convenience closures
   win.updateTimeDisplay = function (time) {
     var text;
-    if (time.mode == 'date-range') {
+    if (time.mode === 'date-range') {
       text = '<b>From</b> ' + time.startDate.toLocaleString();
       text += ' <b>Until</b> ' + time.endDate.toLocaleString();
       text = text.replace(/:00 /g, ' '); // Strip out the seconds
-    } else if (time.mode == 'recent') {
+    } else if (time.mode === 'recent') {
       text = 'Now showing the past ' + time.quantity + ' ' + time.units;
     }
     timeDisplay.getEl().dom.innerHTML = text;
@@ -125,10 +125,10 @@ function toggleWindow(createFunc) { // Convenience for lazily creating toggled d
 
 function ifEnter(func) { // Convenience decorator for specialkey listener definitions
   return function (widget, e) {
-    if (e.getCharCode() == Ext.EventObject.RETURN) {
+    if (e.getCharCode() === Ext.EventObject.RETURN) {
       func(widget);
     }
-  }
+  };
 }
 
 function keepDataWindowOnTop () {
@@ -251,10 +251,10 @@ function getCalendarSelection(which) {
 
   var myHour = myTime.match(/(\d+):/)[1];
   var myMinute = myTime.match(/:(\d+)/)[1];
-  if (myTime.match(/\bAM\b/i) && myHour == '12') {
+  if (myTime.match(/\bAM\b/i) && myHour === '12') {
     myHour = 0;
   }
-  if (myTime.match(/\bPM\b/i) && myHour != '12') {
+  if (myTime.match(/\bPM\b/i) && myHour !== '12') {
     myHour = parseInt(myHour) + 12;
   }
   return myDate.add(Date.HOUR, myHour).add(Date.MINUTE, myMinute);
@@ -298,7 +298,7 @@ function showShortUrl() {
             });
             win.show();
         }
-    }
+    };
     Ext.Ajax.request({
         method: 'GET',
         url: document.body.dataset.baseUrl + 's/render/?' + Composer.url.queryString,
@@ -343,7 +343,7 @@ function createURLWindow() {
 
 function urlChosen() {
   var url = Ext.getCmp('from-url').getValue();
-  Composer.loadMyGraph('temp', decodeURIComponent(url))
+  Composer.loadMyGraph('temp', decodeURIComponent(url));
 }
 
 function createRecentWindow() {
@@ -411,7 +411,7 @@ function saveMyGraph(button, e) {
     'Save to My Graphs', //title
     'Please enter a name for your Graph', //prompt message
     function (button, text) { //handler
-      if (button != 'ok') {
+      if (button !== 'ok') {
         return;
       }
 
@@ -420,7 +420,7 @@ function saveMyGraph(button, e) {
         return;
       }
 
-      if (text.charAt(text.length - 1) == '.') {
+      if (text.charAt(text.length - 1) === '.') {
         Ext.Msg.alert('Graph names cannot end in a period.');
         return;
       }
@@ -464,7 +464,7 @@ function deleteMyGraph() {
     'Delete a saved My Graph', //title
     'Please enter the name of the My Graph you wish to delete', //prompt message
     function (button, text) { //handler
-      if (button != 'ok') {
+      if (button !== 'ok') {
         return;
       }
 
@@ -625,7 +625,7 @@ var GraphDataWindow = {
       return;
     }
 
-    if (selected == 0) {
+    if (selected === 0) {
       Ext.getCmp('editTargetButton').disable();
       Ext.getCmp('removeTargetButton').disable();
       Ext.getCmp('applyFunctionButton').disable();
@@ -640,7 +640,7 @@ var GraphDataWindow = {
     }
 
     // Swap Targets
-    if (selected == 2)
+    if (selected === 2)
       Ext.getCmp('menuSwapTargets').enable();
     else
       Ext.getCmp('menuSwapTargets').disable();
@@ -663,12 +663,12 @@ var GraphDataWindow = {
       ]
     };
 
-    if (this.getSelectedTargets().length == 0) {
+    if (this.getSelectedTargets().length === 0) {
       removeItem.disabled = true;
       editItem.disabled = true;
       moveMenu.disabled = true;
     }
-    if (this.getSelectedTargets().length == 2)
+    if (this.getSelectedTargets().length === 2)
       moveMenu.menu[2].disabled = false;
 
     var contextMenu = new Ext.menu.Menu({ items: [removeItem, editItem, moveMenu] });
@@ -703,7 +703,7 @@ var GraphDataWindow = {
   },
 
   applyFuncToEachWithInput: function (funcName, question, options) {
-    if (options == null) {
+    if (options === null) {
       options = {};
     }
 
@@ -712,7 +712,7 @@ var GraphDataWindow = {
         'Input Required', //title
         question, //message
         function (button, inputValue) { //handler
-          if (button == 'ok' && (options.allowBlank || inputValue != '')) {
+          if (button === 'ok' && (options.allowBlank || inputValue !== '')) {
             if (options.quote) {
               inputValue = '"' + inputValue + '"';
             }
@@ -785,7 +785,7 @@ var GraphDataWindow = {
         var firstIndex = indexOfTarget(target);
         removeTarget(target);
 
-        args.reverse()
+        args.reverse();
         Ext.each(args, function (arg) {
           if (!arg.match(/^([0123456789\.]+|".+"|'.*')$/)) { //Skip string and number literals
             insertTarget(firstIndex, arg);
@@ -806,7 +806,7 @@ var GraphDataWindow = {
     metricCompleter = new MetricCompleter({
       listeners: {
         specialkey: function (field, e) {
-                      if (e.getKey() == e.ENTER) {
+                      if (e.getKey() === e.ENTER) {
                         var target = metricCompleter.getValue();
                         addTarget(target);
                         Composer.syncTargetList();
@@ -874,7 +874,7 @@ var GraphDataWindow = {
   editTarget: function (item, e) {
     var selected = this.targetList.getSelectedRecords();
 
-    if (selected.length != 1) {
+    if (selected.length !== 1) {
       Ext.MessageBox.show({
         title: 'Error',
         msg: 'You must select exactly one target to edit.',
@@ -892,7 +892,7 @@ var GraphDataWindow = {
       value: record.get('value'),
       listeners: {
         specialkey: function (field, e) {
-                      if (e.getKey() == e.ENTER) {
+                      if (e.getKey() === e.ENTER) {
                         var target = metricCompleter.getValue();
 
                         record.set('value', target);
@@ -914,7 +914,7 @@ var GraphDataWindow = {
     function editHandler () {
       var newValue = metricCompleter.getValue();
 
-      if (newValue != '') {
+      if (newValue !== '') {
         record.set('value', newValue);
         record.commit();
 
@@ -981,11 +981,11 @@ var GraphDataWindow = {
     Ext.each(selectedRecords, function(record) {
       var index = store.indexOf(record);
 
-      if (direction == -1 && index == 0) {
+      if (direction === -1 && index === 0) {
         exit = true;
         return false;
       }
-      else if (direction == 1 && index == store.getCount() - 1) {
+      else if (direction === 1 && index === store.getCount() - 1) {
         exit = true;
         return false;
       }
@@ -1015,7 +1015,7 @@ var GraphDataWindow = {
 
   _swapTargets: function() {
     var selectedRecords = this.targetList.getSelectedRecords();
-    if (selectedRecords.length != 2)
+    if (selectedRecords.length !== 2)
       return;
 
     var recordA = selectedRecords[0];
@@ -1226,8 +1226,8 @@ function toggleAutoRefresh(button, pressed) {
 
     //var interval = Math.min.apply(null, [context['interval'] for each (context in MetricContexts)] || [0]) || 60;
     var interval = GraphiteConfig.refreshInterval;
-    button.timer = setTimeout(doRefresh, interval * 1000)
-  }
+    button.timer = setTimeout(doRefresh, interval * 1000);
+  };
 
   if (button.timer) { // AutoRefresh is on
     if (!pressed) { // The button was untoggled, turn off AutoRefresh
@@ -1452,7 +1452,7 @@ function menuHelpItem(name, message) {
 
 function paramPrompt(question, param, regexp) {
 
-  if(regexp == null) {
+  if(regexp === null) {
     regexp = /[^A-Za-z0-9_.\-]/;
   }
 
@@ -1461,12 +1461,12 @@ function paramPrompt(question, param, regexp) {
       'Input Required',
       question,
       function (button, value) {
-        if (value.search(regexp) != -1) {
+        if (value.search(regexp) !== -1) {
           Ext.Msg.alert('Input can only contain letters, numbers, underscores, or periods.');
           return;
         }
 
-        if (value.charAt(value.length - 1) == '.') {
+        if (value.charAt(value.length - 1) === '.') {
           Ext.Msg.alert('Input cannot end in a period.');
           return;
         }
