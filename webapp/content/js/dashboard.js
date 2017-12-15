@@ -36,7 +36,7 @@ var cookieProvider = new Ext.state.CookieProvider({
 
 var NAV_BAR_REGION = cookieProvider.get('navbar-region') || 'north';
 
-var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') != 'false';
+var CONFIRM_REMOVE_ALL = cookieProvider.get('confirm-remove-all') !== 'false';
 
 var currentlySettingHash = false;
 
@@ -145,7 +145,7 @@ if (sessionDefaultParamsJson && sessionDefaultParamsJson.length > 0) {
 }
 
 function isLoggedIn() {
-  return userName != null;
+  return userName !== null;
 }
 
 function hasPermission(permission) {
@@ -271,7 +271,7 @@ function initDashboard () {
     }]
   });
 
-  if (NAV_BAR_REGION == 'west') {
+  if (NAV_BAR_REGION === 'west') {
     metricSelectorMode = 'tree';
     metricSelector = new Ext.tree.TreePanel({
       root: new Ext.tree.TreeNode({}),
@@ -292,7 +292,7 @@ function initDashboard () {
                    }
       }
     });
-  } else { // NAV_BAR_REGION == 'north'
+  } else { // NAV_BAR_REGION === 'north'
     metricSelectorMode = 'text';
     metricSelectorGrid = new Ext.grid.GridPanel({
       region: 'center',
@@ -315,10 +315,10 @@ function initDashboard () {
         bodyCssClass: 'metric-result',
         getRowClass: function(record, index) {
           var toggledClass = (
-             graphStore.findExact('target', 'target=' + record.data.path) == -1
+             graphStore.findExact('target', 'target=' + record.data.path) === -1
             ) ? 'metric-not-toggled' : 'metric-toggled';
           var branchClass = (
-            record.data['is_leaf'] == '0'
+            record.data['is_leaf'] === '0'
           ) ? 'result-is-branch-node' : '';
           return toggledClass + ' ' + branchClass + ' metric-result';
         }
@@ -341,7 +341,7 @@ function initDashboard () {
       listeners: {
         rowclick: function (thisGrid, rowIndex, e) {
                     var record = thisGrid.getStore().getAt(rowIndex);
-                    if (record.data['is_leaf'] == '1') {
+                    if (record.data['is_leaf'] === '1') {
                       graphAreaToggle(record.data.path);
                       thisGrid.getView().refresh();
                     } else {
@@ -355,10 +355,10 @@ function initDashboard () {
 
     function completerKeyPress(thisField, e) {
       var charCode = e.getCharCode();
-      if (charCode == 8 ||  //backspace
+      if (charCode === 8 ||  //backspace
           charCode >= 46 || //delete and all printables
-          charCode == 36 || //home
-          charCode == 35) { //end
+          charCode === 36 || //home
+          charCode === 35) { //end
         autocompleteTask.delay(AUTOCOMPLETE_DELAY);
       }
     }
@@ -452,16 +452,16 @@ function initDashboard () {
       },
 
       setDropAction: function (action) {
-        if (this.mergeSwitchTimeout != null) {
+        if (this.mergeSwitchTimeout !== null) {
           clearTimeout(this.mergeSwitchTimeout);
           this.mergeSwitchTimeout = null;
         }
 
         this.dropAction = action;
-        if (action == 'reorder') {
+        if (action === 'reorder') {
           //revert merge ui change
           this.mergeEl.hide();
-        } else if (action == 'merge') {
+        } else if (action === 'merge') {
           //apply merge ui change
           this.mergeEl.show();
           var targetXY = this.mergeTarget.getXY();
@@ -478,20 +478,20 @@ function initDashboard () {
         var dropIndex = nodes.indexOf(target);
         var dragIndex = graphStore.indexOf(data.draggedRecord);
 
-        if (dragIndex == dropIndex) {
+        if (dragIndex === dropIndex) {
           return false;
         }
 
-        if (this.dropAction == 'reorder') {
+        if (this.dropAction === 'reorder') {
           graphStore.removeAt(dragIndex);
           graphStore.insert(dropIndex, data.draggedRecord);
           updateGraphRecords();
           return true;
-        } else if (this.dropAction == 'merge') {
+        } else if (this.dropAction === 'merge') {
           var dragRecord = data.draggedRecord;
           var dropRecord = graphView.getRecord(target);
-          if (dropRecord.data.params.target.length == 1) {
-            if (dropRecord.data.params.target[0] == dropRecord.data.params.title) {
+          if (dropRecord.data.params.target.length === 1) {
+            if (dropRecord.data.params.target[0] === dropRecord.data.params.title) {
               delete dropRecord.data.params.title;
             }
           }
@@ -581,7 +581,7 @@ function initDashboard () {
           handler: function (item, e) {
                      sendSaveRequest(dashboardName);
                    },
-          disabled: dashboardName == null || !hasPermission('change')
+          disabled: dashboardName === null || !hasPermission('change')
         }, {
           id: 'dashboard-save-as-button',
           text: 'Save As',
@@ -711,7 +711,7 @@ function initDashboard () {
     listeners: {
       change: function (field, newValue) { updateAutoRefresh(newValue); },
       specialkey: function (field, e) {
-                    if (e.getKey() == e.ENTER) {
+                    if (e.getKey() === e.ENTER) {
                       if (field.getValue() >= 1) {
                         updateAutoRefresh( field.getValue() );
                       }
@@ -764,7 +764,7 @@ function initDashboard () {
   /* Nav Bar */
   navBarNorthConfig.items = [metricSelector];
   navBarWestConfig.items = [contextSelector, metricSelector];
-  var navBarConfig = (NAV_BAR_REGION == 'north') ? navBarNorthConfig : navBarWestConfig;
+  var navBarConfig = (NAV_BAR_REGION === 'north') ? navBarNorthConfig : navBarWestConfig;
   navBar = new Ext.Panel(navBarConfig);
 
   viewport = new Ext.Viewport({
@@ -786,9 +786,9 @@ function initDashboard () {
     navBar.collapse(false);
   }
 
-  if(window.location.hash != '')
+  if(window.location.hash !== '')
   {
-    if (window.location.hash.indexOf('/') != -1) {
+    if (window.location.hash.indexOf('/') !== -1) {
       var nameVal = window.location.hash.substr(1).split('#');
       sendLoadTemplateRequest(nameVal[0],nameVal[1]);
     } else {
@@ -818,7 +818,7 @@ function metricTypeSelected (combo, record, index) {
 
   // Show only the fields for the selected context
   Ext.each(contextSelectorFields, function (field) {
-    if (field.getId().indexOf( selectedScheme.get('name') ) == 0) {
+    if (field.getId().indexOf( selectedScheme.get('name') ) === 0) {
       field.show();
     } else {
       field.hide();
@@ -844,7 +844,7 @@ function buildQuery (queryEvent) {
     var part = parts[i];
     var field = part.match(/^<[^>]+>$/) ? part.substr(1, part.length - 2) : null;
 
-    if (field == null) {
+    if (field === null) {
       queryString += part + '.';
       continue;
     }
@@ -853,7 +853,7 @@ function buildQuery (queryEvent) {
     var value = combo.getValue();
 
     if (UI_CONFIG.automatic_variants) {
-      if (value.indexOf(',') > -1 && value.search(/[{}]/) == -1) {
+      if (value.indexOf(',') > -1 && value.search(/[{}]/) === -1) {
         value = '{' + value + '}';
       }
     }
@@ -896,12 +896,12 @@ function getContextFieldsPattern() {
     setContextFieldCookie(field.name, value);
 
     if (UI_CONFIG.automatic_variants) {
-      if (value.indexOf(',') > -1 && value.search(/[{}]/) == -1) {
+      if (value.indexOf(',') > -1 && value.search(/[{}]/) === -1) {
         value = '{' + value + '}';
       }
     }
 
-    if (value.trim() == '') {
+    if (value.trim() === '') {
       missingFields = true;
     } else {
       pattern = pattern.replace('<' + field.name + '>', value);
@@ -916,7 +916,7 @@ function getContextFieldsPattern() {
 }
 
 function metricSelectorShow(pattern) {
-  if (metricSelectorMode == 'tree') {
+  if (metricSelectorMode === 'tree') {
     metricTreeSelectorShow(pattern);
   } else {
     metricTextSelectorShow(pattern);
@@ -929,7 +929,7 @@ function metricTreeSelectorShow(pattern) {
   function setParams (loader, node, callback) {
     loader.baseParams.format = 'treejson';
 
-    if (node.id == 'rootMetricSelectorNode') {
+    if (node.id === 'rootMetricSelectorNode') {
       loader.baseParams.query = pattern + '.*';
     } else {
       var idParts = node.id.split('.');
@@ -987,7 +987,7 @@ function graphAreaToggle(target, options) {
      metric path, eg. "foo.bar.baz".
   */
   var graphTargetString;
-  if (target.substr(0,7) == 'target=') {
+  if (target.substr(0,7) === 'target=') {
     graphTargetString = target;
   } else {
     graphTargetString = 'target=' + target;
@@ -1029,7 +1029,7 @@ function graphAreaToggle(target, options) {
 function importGraphUrl(targetUrl, options) {
   var fullUrl = targetUrl;
   var i = fullUrl.indexOf('?');
-  if (i == -1) {
+  if (i === -1) {
     return;
   }
 
@@ -1042,7 +1042,7 @@ function importGraphUrl(targetUrl, options) {
   }
   params['target'] = graphTargetList;
 
-  if (graphTargetList.length == 0) {
+  if (graphTargetList.length === 0) {
     return;
   }
 
@@ -1076,7 +1076,7 @@ function updateGraphRecords() {
     Ext.apply(params, item.data.params);
     Ext.apply(params, GraphSize);
     params._uniq = Math.random();
-    if (params.title === undefined && params.target.length == 1) {
+    if (params.title === undefined && params.target.length === 1) {
       params.title = params.target[0];
     }
     if (!params.uniq === undefined) {
@@ -1174,7 +1174,7 @@ var TimeRange = {
 };
 
 function getTimeText() {
-  if (TimeRange.type == 'relative') {
+  if (TimeRange.type === 'relative') {
     var text = 'Now showing the past ' + TimeRange.relativeStartQuantity + ' ' + TimeRange.relativeStartUnits;
     if (TimeRange.relativeUntilUnits !== 'now' && TimeRange.relativeUntilUnits !== '') {
       text = text + ' until ' + TimeRange.relativeUntilQuantity + ' ' + TimeRange.relativeUntilUnits + ' ago';
@@ -1191,9 +1191,9 @@ function updateTimeText() {
 }
 
 function timeRangeUpdated() {
-  if (TimeRange.type == 'relative') {
+  if (TimeRange.type === 'relative') {
     var fromParam = '-' + TimeRange.relativeStartQuantity + TimeRange.relativeStartUnits;
-    if (TimeRange.relativeUntilUnits == 'now') {
+    if (TimeRange.relativeUntilUnits === 'now') {
       var untilParam = 'now';
     } else {
       var untilParam = '-' + TimeRange.relativeUntilQuantity + TimeRange.relativeUntilUnits;
@@ -1260,7 +1260,7 @@ function selectRelativeTime() {
     value: TimeRange.relativeUntilUnits,
     listeners: {
       select: function(combo, record, index) {
-                  if (index == 0) {
+                  if (index === 0) {
                     Ext.getCmp('until-quantity-field').setValue('');
                     Ext.getCmp('until-quantity-field').setDisabled(true);
                   } else {
@@ -1268,7 +1268,7 @@ function selectRelativeTime() {
                   }
                 },
       render: function(combo) {
-                if (combo.getValue() == 'now') {
+                if (combo.getValue() === 'now') {
                   Ext.getCmp('until-quantity-field').setValue('');
                   Ext.getCmp('until-quantity-field').setDisabled(true);
                 } else {
@@ -1421,7 +1421,7 @@ function newFromUrl() {
     width: '100%',
     listeners: {
       specialkey: function (field, e) {
-                    if (e.getKey() == e.ENTER) {
+                    if (e.getKey() === e.ENTER) {
                       applyUrl();
                     }
                   },
@@ -1455,11 +1455,11 @@ function newFromUrl() {
 function newFromSavedGraph() {
   function setParams(loader, node) {
     var nodeId = node.id.replace(/^[A-Za-z]+Tree\.?/,'');
-    loader.baseParams.query = (nodeId == '') ? '*' : (nodeId + '.*');
+    loader.baseParams.query = (nodeId === '') ? '*' : (nodeId + '.*');
     loader.baseParams.format = 'treejson';
     loader.baseParams.contexts = '1';
     loader.baseParams.path = nodeId;
-    if (node.parentNode && node.parentNode.id == 'UserGraphsTree') {
+    if (node.parentNode && node.parentNode.id === 'UserGraphsTree') {
       loader.baseParams.user = node.id;
     }
   }
@@ -1485,7 +1485,7 @@ function newFromSavedGraph() {
       }
     });
 
-    if (selModel.getSelectedNodes().length == 0) {
+    if (selModel.getSelectedNodes().length === 0) {
       Ext.getCmp('user-graphs-select-button').setDisabled(true);
     } else {
       Ext.getCmp('user-graphs-select-button').setDisabled(false);
@@ -1546,7 +1546,7 @@ function newFromSavedGraph() {
 function newFromMetric() {
   function applyMetric() {
     var inputMetric = Ext.getCmp('import-metric-field').getValue();
-    if (inputMetric == '') {
+    if (inputMetric === '') {
       return;
     }
     var graphTargetString = Ext.urlEncode({target: inputMetric});
@@ -1577,7 +1577,7 @@ function newFromMetric() {
     width: '100%',
     listeners: {
       specialkey: function (field, e) {
-                    if (e.getKey() == e.ENTER) {
+                    if (e.getKey() === e.ENTER) {
                       applyMetric();
                     }
                   },
@@ -1628,7 +1628,7 @@ function editDefaultGraphParameters() {
     value: Ext.urlEncode(editParams),
     listeners: {
       specialkey: function (field, e) {
-                    if (e.getKey() == e.ENTER) {
+                    if (e.getKey() === e.ENTER) {
                       applyParams();
                     }
                   },
@@ -1672,13 +1672,13 @@ function selectGraphSize() {
       select: function (combo, record, index) {
                 var w = '';
                 var h = '';
-                if (index == 1) { //small
+                if (index === 1) { //small
                   w = 300;
                   h = 230;
-                } else if (index == 2) { //medium
+                } else if (index === 2) { //medium
                   w = 400;
                   h = 300;
-                } else if (index == 3) { //large
+                } else if (index === 3) { //large
                   w = 500;
                   h = 400;
                 }
@@ -1738,7 +1738,7 @@ function selectGraphSize() {
 }
 
 function doShare() {
-  if (dashboardName == null) {
+  if (dashboardName === null) {
     Ext.Ajax.request({
       url: document.body.dataset.baseUrl + 'dashboard/create-temporary/',
       method: 'POST',
@@ -1763,7 +1763,7 @@ function doShare() {
       msg: 'You must save changes to your dashboard in order to share it.',
       buttons: Ext.Msg.OKCANCEL,
       fn: function (button) {
-            if (button == 'ok') {
+            if (button === 'ok') {
               sendSaveRequest(dashboardName);
               showShareWindow();
             }
@@ -1821,7 +1821,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
     return;
   }
 
-  if ( (activeMenu != null) && (selectedRecord == record) ) {
+  if ( (activeMenu !== null) && (selectedRecord === record) ) {
     activeMenu.destroy();
     activeMenu = null;
     return;
@@ -1833,13 +1833,13 @@ function graphClicked(graphView, graphIndex, element, evt) {
   var menuItems = [];
 
   function applyChanges (field, e) {
-    if (e.getKey() != e.ENTER) {
+    if (e.getKey() !== e.ENTER) {
       return;
     }
 
     var targets = [];
     Ext.each(menuItems, function (field) {
-      if ((!field.getXType) || field.getXType() != 'textfield') {
+      if ((!field.getXType) || field.getXType() !== 'textfield') {
         return;
       }
       if (field.initialConfig.isTargetField) {
@@ -1967,7 +1967,7 @@ function graphClicked(graphView, graphIndex, element, evt) {
       singleSelect: false,
       listeners: {
         selectionchange: function (thisSelModel) {
-          functionsButton.setDisabled(thisSelModel.getCount() == 0);
+          functionsButton.setDisabled(thisSelModel.getCount() === 0);
         }
       }
     }),
@@ -2236,7 +2236,7 @@ function breakoutGraph(record) {
         var arglets = arg.split('(');
         map(arglets[arglets.length-1].split(')'), function (expr) {
           expr = expr.replace(/^\s*(.+?)\s*$/, '$1');
-          if (expr.length == 0 || expr[0] == '"' || expr[0] == '\'') return;
+          if (expr.length === 0 || expr[0] === '"' || expr[0] === '\'') return;
 
           if (expr.match(/[a-z].*\..*[a-z]/i)) {
             exprsInThisTarget++;
@@ -2412,7 +2412,7 @@ function historyGraph(record){
 
     var props = getProps(record);
     var title = '';
-    title = (props.params.title != undefined) ? props.params.title : '';
+    title = (props.params.title !== undefined) ? props.params.title : '';
 
     props = getProps(record);
     props.params.title = title + ' 1 hour';
@@ -2454,7 +2454,7 @@ function historyGraph(record){
           Ext.apply(params, item.data.params);
           //Ext.apply(params, GraphSize);
           params._uniq = Math.random();
-          if (params.title === undefined && params.target.length == 1) {
+          if (params.title === undefined && params.target.length === 1) {
             params.title = params.target[0];
           }
 
@@ -2498,7 +2498,7 @@ function removeAllGraphs() {
       "Are you sure?",
       "Are you sure you want to remove all the graphs?",
       function (choice) {
-        if (choice == 'yes') {
+        if (choice === 'yes') {
           graphStore.removeAll();
           refreshGraphs();
         }
@@ -2584,7 +2584,7 @@ var keyEventHandlers = {
   completer_add_metrics: function () {
       if (metricSelectorGrid) {
         metricSelectorGrid.getStore().each(function (record) {
-          if (record.data.path[ record.data.path.length - 1] != '.') {
+          if (record.data.path[ record.data.path.length - 1] !== '.') {
             graphAreaToggle(record.data.path, {dontRemove: true});
           }
         });
@@ -2600,7 +2600,7 @@ var keyEventHandlers = {
       }
     },
   save_dashboard: function () {
-      if (dashboardName == null) {
+      if (dashboardName === null) {
         saveDashboard();
       } else {
         sendSaveRequest(dashboardName);
@@ -2716,7 +2716,7 @@ function saveDashboard() {
     'Save Dashboard',
     'Enter the name to save this dashboard as',
     function (button, text) {
-      if (button == 'ok') {
+      if (button === 'ok') {
         setDashboardName(text);
         sendSaveRequest(text);
       }
@@ -2987,7 +2987,7 @@ function setDashboardName(name) {
   dashboardName = name;
   var saveButton = Ext.getCmp('dashboard-save-button');
 
-  if (name == null || !hasPermission('change')) {
+  if (name === null || !hasPermission('change')) {
     dashboardURL = null;
     document.title = 'untitled - Graphite Dashboard';
     navBar.setTitle('untitled');
@@ -2996,7 +2996,7 @@ function setDashboardName(name) {
   } else {
     var urlparts = location.href.split('#')[0].split('/');
     var i = urlparts.indexOf('dashboard');
-    if (i == -1) {
+    if (i === -1) {
       Ext.Msg.alert('Error', 'urlparts = ' + Ext.encode(urlparts) + ' and indexOf(dashboard) = ' + i);
       return;
     }
@@ -3051,7 +3051,7 @@ function configureUI() {
         boxLabel: 'Tree (left nav)',
         name: 'navbar-position',
         inputValue: 'left',
-        checked: (NAV_BAR_REGION == 'west')
+        checked: (NAV_BAR_REGION === 'west')
       }, {
         id: 'navbar-top-radio',
         xtype: 'radio',
@@ -3059,7 +3059,7 @@ function configureUI() {
         boxLabel: 'Completer (top nav)',
         name: 'navbar-position',
         inputValue: 'top',
-        checked: (NAV_BAR_REGION == 'north')
+        checked: (NAV_BAR_REGION === 'north')
       }
     ],
     buttons: [
@@ -3071,14 +3071,14 @@ function configureUI() {
 }
 
 function updateNavBar(region) {
-  if (region == NAV_BAR_REGION) {
+  if (region === NAV_BAR_REGION) {
     return;
   }
 
   cookieProvider.set('navbar-region', region);
   NAV_BAR_REGION = region;
 
-  if (graphStore.getCount() == 0) {
+  if (graphStore.getCount() === 0) {
     window.location.reload();
   } else {
     Ext.Msg.alert('Cookie Updated', 'You must refresh the page to update the nav bar\'s location.');
@@ -3132,7 +3132,7 @@ function showDashboardFinder() {
        'Delete Dashboard',
         'Are you sure you want to delete the ' + name + ' dashboard?',
         function (button) {
-          if (button == 'yes') {
+          if (button === 'yes') {
             deleteDashboard(name);
             dashboardsStore.remove(record);
             dashboardsList.refresh();
@@ -3151,7 +3151,7 @@ function showDashboardFinder() {
     hideHeaders: true,
     listeners: {
       selectionchange: function (listView, selections) {
-                         if (listView.getSelectedRecords().length == 0) {
+                         if (listView.getSelectedRecords().length === 0) {
                            Ext.getCmp('finder-open-button').disable();
                            Ext.getCmp('finder-delete-button').disable();
                          } else {
@@ -3182,7 +3182,7 @@ function showDashboardFinder() {
   var queryUpdateTask = new Ext.util.DelayedTask(
     function () {
       var currentQuery = queryField.getValue();
-      if (lastQuery != currentQuery) {
+      if (lastQuery !== currentQuery) {
         dashboardsStore.load();
       }
       lastQuery = currentQuery;
@@ -3195,7 +3195,7 @@ function showDashboardFinder() {
     enableKeyEvents: true,
     listeners: {
       keyup: function (field, e) {
-                  if (e.getKey() == e.ENTER) {
+                  if (e.getKey() === e.ENTER) {
                     sendLoadRequest(field.getValue());
                     win.close();
                   } else {
@@ -3273,7 +3273,7 @@ function showTemplateFinder() {
        'Delete Template',
         'Are you sure you want to delete the ' + name + ' template?',
         function (button) {
-          if (button == 'yes') {
+          if (button === 'yes') {
             deleteTemplate(name);
             templatesStore.remove(record);
             templatesList.refresh();
@@ -3292,7 +3292,7 @@ function showTemplateFinder() {
     hideHeaders: true,
     listeners: {
       selectionchange: function (listView, selections) {
-                         if (listView.getSelectedRecords().length == 0) {
+                         if (listView.getSelectedRecords().length === 0) {
                            Ext.getCmp('finder-open-button').disable();
                            Ext.getCmp('finder-delete-button').disable();
                          } else {
@@ -3316,7 +3316,7 @@ function showTemplateFinder() {
   var queryUpdateTask = new Ext.util.DelayedTask(
     function () {
       var currentQuery = queryField.getValue();
-      if (lastQuery != currentQuery) {
+      if (lastQuery !== currentQuery) {
         templatesStore.load();
       }
       lastQuery = currentQuery;
@@ -3329,7 +3329,7 @@ function showTemplateFinder() {
     enableKeyEvents: true,
     listeners: {
       keyup: function (field, e) {
-                  if (e.getKey() == e.ENTER) {
+                  if (e.getKey() === e.ENTER) {
                     sendLoadRequest(field.getValue(), reset_params=true);
                     win.close();
                   } else {
@@ -3445,7 +3445,7 @@ function applyFuncToEach(funcName, extraArg) {
 }
 
 function applyFuncToEachWithInput (funcName, question, options) {
-  if (options == null) {
+  if (options === null) {
     options = {};
   }
 
@@ -3454,7 +3454,7 @@ function applyFuncToEachWithInput (funcName, question, options) {
       'Input Required', //title
       question, //message
       function (button, inputValue) { //handler
-        if (button == 'ok' && (options.allowBlank || inputValue != '')) {
+        if (button === 'ok' && (options.allowBlank || inputValue !== '')) {
           if (options.quote) {
             inputValue = '"' + inputValue + '"';
           }
@@ -3547,7 +3547,7 @@ function setContextFieldCookie(field, value) {
 function uniq(myArray) {
   var uniqArray = [];
   for (var i=0; i<myArray.length; i++) {
-    if (uniqArray.indexOf(myArray[i]) == -1) {
+    if (uniqArray.indexOf(myArray[i]) === -1) {
       uniqArray.push(myArray[i]);
     }
   }
@@ -3573,7 +3573,7 @@ function getLoginMenuItemText() {
 /* After login/logout, make any necessary adjustments to Dashboard menu items (text and/or disabled) */
 function postLoginMenuAdjust() {
   Ext.getCmp('dashboard-login-button').setText(getLoginMenuItemText());
-  Ext.getCmp('dashboard-save-button').setDisabled(dashboardName == null || !hasPermission('change'));
+  Ext.getCmp('dashboard-save-button').setDisabled(dashboardName === null || !hasPermission('change'));
   Ext.getCmp('dashboard-save-as-button').setDisabled(!hasPermission('change'));
 }
 
@@ -3617,7 +3617,7 @@ function showLoginForm() {
         win.close();
       },
       failure: function(form, action) {
-        if (action.failureType == 'server') {
+        if (action.failureType === 'server') {
           var obj = Ext.util.JSON.decode(action.response.responseText);
           Ext.Msg.alert('Login Failed!', obj.errors.reason);
         } else {
