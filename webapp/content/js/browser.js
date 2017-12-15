@@ -188,7 +188,7 @@ var recursiveExpand = {
 
   expand : function( node, nodePath ) {
 
-    if( typeof nodePath != 'undefined' ) {
+    if( typeof nodePath !== 'undefined' ) {
       this.parts = nodePath;
     } else {
       nodePath = recursiveExpand.parts;

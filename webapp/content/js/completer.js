@@ -44,13 +44,13 @@ MetricCompleter = Ext.extend(Ext.form.ComboBox, {
   },
 
   prepareQuery: function (queryEvent) {
-    if (queryEvent.query.substr(-1) != '*') {
+    if (queryEvent.query.substr(-1) !== '*') {
       queryEvent.query += '*';
     }
   },
 
   onSpecialKey: function (field, e) {
-    if (e.getKey() == e.TAB) { // This was a pain in the ass to actually get it working right
+    if (e.getKey() === e.TAB) { // This was a pain in the ass to actually get it working right
       field.getEl().blur();
       field.getEl().focus(50);
       field.doQuery( field.getValue() );
