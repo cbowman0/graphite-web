@@ -76,7 +76,7 @@ function setParams(loader, node) {
   loader.baseParams.format = 'treejson';
   loader.baseParams.path = nodeId;
 
-  if (node.parentNode && node.parentNode.id == 'UserGraphsTree') {
+  if (node.parentNode && node.parentNode.id === 'UserGraphsTree') {
     loader.baseParams.user = node.id;
   }
 } // setParams
@@ -90,7 +90,7 @@ function createTreePanel( rootNode ){
     loader.baseParams.format = 'treejson';
     loader.baseParams.path = nodeId;
 
-    if (node.parentNode && node.parentNode.id == 'UserGraphsTree') {
+    if (node.parentNode && node.parentNode.id === 'UserGraphsTree') {
       loader.baseParams.user = node.id;
     }
   }
@@ -139,7 +139,7 @@ function createTreePanel( rootNode ){
   });
 
   treePanel.on('click', function (node,evt) {
-    if (node.id == 'no-click') {
+    if (node.id === 'no-click') {
       return;
     }
 
@@ -234,7 +234,7 @@ function showSearchError(message) {
 }
 
 function sendSearchRequest (searchField, evt) {
-  if (evt.getCharCode() != Ext.EventObject.RETURN) {
+  if (evt.getCharCode() !== Ext.EventObject.RETURN) {
     return;
   }
   // Clear any previous errors
@@ -255,7 +255,7 @@ function sendSearchRequest (searchField, evt) {
 
 function handleSearchResponse (response, options) {
   var text = response.responseText;
-  if (text == '') {
+  if (text === '') {
     showSearchError('Nothing matched your query');
     return;
   }
@@ -278,7 +278,7 @@ function createCompleterPanel() {
   var metricCompleter = new MetricCompleter({emptyText: 'Start typing a metric name...'});
 
   metricCompleter.on('specialkey', function (field, e) {
-    if (e.getKey() == e.ENTER) {
+    if (e.getKey() === e.ENTER) {
       var target = metricCompleter.getValue();
       Composer.toggleTarget(target);
     }
