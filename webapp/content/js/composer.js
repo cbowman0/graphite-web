@@ -48,7 +48,7 @@ GraphiteComposer.prototype = {
     this.syncTargetList();
 
     // If the updateImage parameter is unspecified or true, reload the image.
-    if(undefined == updateImage || true == updateImage) {
+    if(undefined === updateImage || true === updateImage) {
       this.updateImage();
     }
   },
@@ -171,7 +171,7 @@ ParameterizedURL.prototype = {
 
   removeParam: function (key, value) {
     /* Remove one or all values for a given parameter */
-    if (value == null) { //Remove all values
+    if (value === null) { //Remove all values
       this.params[key] = null; // in case it didn't exist, delete won't break now
       delete this.params[key];
     } else { //Remove a specific value
@@ -214,7 +214,7 @@ ParameterizedURL.prototype = {
       if ( Ext.isString(value) ) {
         params[key] = [value];
       }
-      if (value == 'undefined' || value == undefined) {
+      if (value === 'undefined' || value === undefined) {
         params[key] = null;
         delete params[key];
       }
@@ -224,7 +224,7 @@ ParameterizedURL.prototype = {
 
   setQueryString: function (qs) {
     /* Use the given query string (and update this.params to match) */
-    this.queryString = qs
+    this.queryString = qs;
     this.syncParams();
     this.syncQueryString();
   },
@@ -238,7 +238,7 @@ ParameterizedURL.prototype = {
   copyQueryStringFromURL: function (url) {
     /* Make this object reflect the parameters of the given url */
     var i = url.indexOf('?');
-    if (i == -1) { // No query string
+    if (i === -1) { // No query string
       this.setParamHash({});
       return;
     }
