@@ -109,20 +109,6 @@ function createComposerWindow(myComposer) {
   return win;
 }
 
-function toggleWindow(createFunc) { // Convenience for lazily creating toggled dialogs
-  function toggler (button, e) {
-    if (!button.window) { //First click, create the window
-      button.window = createFunc();
-    }
-    if (button.window.isVisible()) {
-      button.window.hide();
-    } else {
-      button.window.show();
-    }
-  }
-  return toggler;
-}
-
 function ifEnter(func) { // Convenience decorator for specialkey listener definitions
   return function (widget, e) {
     if (e.getCharCode() === Ext.EventObject.RETURN) {
