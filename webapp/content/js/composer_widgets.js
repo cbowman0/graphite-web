@@ -773,7 +773,7 @@ var GraphDataWindow = {
 
         args.reverse();
         Ext.each(args, function (arg) {
-          if (!arg.match(/^([0123456789\.]+|".+"|'.*')$/)) { //Skip string and number literals
+          if (!arg.match(/^([0123456789.]+|".+"|'.*')$/)) { //Skip string and number literals
             insertTarget(firstIndex, arg);
             _this.targetList.select( TargetStore.findExact('value', arg), true);
           }
@@ -1439,7 +1439,7 @@ function menuHelpItem(name, message) {
 function paramPrompt(question, param, regexp) {
 
   if(regexp === null) {
-    regexp = /[^A-Za-z0-9_.\-]/;
+    regexp = /[^A-Za-z0-9_.-]/;
   }
 
   return function (menuItem, e) {
