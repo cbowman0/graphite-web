@@ -7,14 +7,11 @@ import logging
 import shutil
 import sys
 
-from mock import patch
-
 from graphite.render.datalib import TimeSeries
 from graphite.render.hashing import ConsistentHashRing, hashRequest, hashData
 from graphite.render.evaluator import evaluateTarget, extractPathExpressions, evaluateScalarTokens
 from graphite.render.functions import NormalizeEmptyResultError
 from graphite.render.grammar import grammar
-from graphite.render.utils import extractPathExpressions
 from graphite.render.views import renderViewJson, delegateRendering
 from graphite.util import pickle, msgpack, json
 from mock import patch
@@ -1005,11 +1002,10 @@ class delegateRenderingTest(TestCase):
         data = delegateRendering('line', {}, None)
         self.assertEqual(data, None)
 
-    def test_delegateRendering_line(self):
-        def mock_connection_request(req_type, uri, data, headers):
-            return
+    @patch('django.conf.settings.RENDERING_HOSTS', ['127.0.0.1'])
+    @patch('six.moves.http_client.HTTPConnection.request')
+    def test_delegateRendering_line(self, http_request):
+        http_request.return_value = {}
 
-        with self.settings(RENDERING_HOSTS=['127.0.0.1']):
-            with patch('graphite.render.views.httplib.HTTPConnection.request', mock_connection_request):
-                data = delegateRendering('line', {'target': 'test', 'format': 'json'}, None)
+        data = delegateRendering('line', {'target': 'test', 'format': 'json'}, None)
         self.assertEqual(data, None)
