@@ -15,7 +15,6 @@ import csv
 import math
 import pytz
 import six.moves.http_client
-import httplib
 import sys
 
 from datetime import datetime
