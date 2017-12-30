@@ -13,8 +13,10 @@ from graphite.render.evaluator import evaluateTarget, extractPathExpressions, ev
 from graphite.render.functions import NormalizeEmptyResultError
 from graphite.render.grammar import grammar
 from graphite.render.views import renderViewJson, delegateRendering
-from graphite.util import pickle, msgpack, json
+from graphite.util import BytesIO, pickle, msgpack, json
+
 from mock import patch
+from urllib3.response import HTTPResponse
 import whisper
 
 from django.conf import settings
@@ -1004,8 +1006,14 @@ class delegateRenderingTest(TestCase):
 
     @patch('django.conf.settings.RENDERING_HOSTS', ['127.0.0.1'])
     @patch('six.moves.http_client.HTTPConnection.request')
-    def test_delegateRendering_line(self, http_request):
-        http_request.return_value = {}
+    @patch('six.moves.http_client.HTTPConnection.getresponse')
+    def test_delegateRendering_line(self, http_response, http_request):
+        response = self.client.get(reverse('render'), {'target': 'test'})
+        self.assertEqual(response['Content-Type'], 'image/png')
+        image_data = response.content
+        responseObject = HTTPResponse(body=BytesIO(image_data), headers={'Content-Type': 'image/png'}, status=200, preload_content=False)
+        http_request.return_value = responseObject
+        http_response.return_value = responseObject
 
-        data = delegateRendering('line', {'target': 'test', 'format': 'json'}, None)
-        self.assertEqual(data, None)
+        ret_data = delegateRendering('line', {'target': 'test'}, None)
+        self.assertEqual(ret_data, image_data)
