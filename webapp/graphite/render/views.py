@@ -15,7 +15,6 @@ import csv
 import math
 import pytz
 import six.moves.http_client
-import sys
 
 from datetime import datetime
 from time import time
@@ -510,8 +509,6 @@ def delegateRendering(graphType, graphOptions, headers=None):
       pool.add(connection)
       return imageData
     except:
-      print "Exception while attempting remote rendering request on %s" % server
-      print sys.exc_info()[0]
       log.exception("Exception while attempting remote rendering request on %s" % server)
       log.rendering('Exception while remotely rendering on %s wasted %.6f' % (server,time() - start2))
       continue
