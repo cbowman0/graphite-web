@@ -17,7 +17,7 @@ from . import views
 
 urlpatterns = patterns(
     '',
-    url('^rawdata/?$', views.get_data, name='graphlot_get_data'),
-    url('^findmetric/?$', views.find_metric, name='graphlot_find_metric'),
-    url('', views.graphlot_render, name='graphlot'),
+    url(r'^/rawdata/?$', views.get_data, name='graphlot_get_data'),
+    url(r'^/findmetric/?$', views.find_metric, name='graphlot_find_metric'),
+    url(r'^/?$', views.graphlot_render, name='graphlot'),
 )
