@@ -25,6 +25,7 @@ graphite_urls = [
     url('^browser', include('graphite.browser.urls')),
     url('^account', include('graphite.account.urls')),
     url('^dashboard', include('graphite.dashboard.urls')),
+    url('^graphlot', include('graphite.graphlot.urls')),
     url('^whitelist', include('graphite.whitelist.urls')),
     url('^version', include('graphite.version.urls')),
     url('^events', include('graphite.events.urls')),
