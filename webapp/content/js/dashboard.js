@@ -2807,9 +2807,6 @@ function sendSaveRequest(name) {
                var result = Ext.decode(response.responseText);
                if (result.error) {
                  Ext.Msg.alert('Error', htmlEncode('There was an error saving this dashboard: ' + result.error));
-               }
-               if(newURL) {
-                 window.location = newURL;
                } else {
                  changeHash(name);
                }
